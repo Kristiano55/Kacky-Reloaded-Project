@@ -2,11 +2,11 @@ name: Update data & deploy
 
 on:
   schedule:
-    - cron: '17 */6 * * *'   # every 6 hours
+    - cron: '*/30 * * * *'   # every 30 minutes
   workflow_dispatch:
     inputs:
       fetch:
-        description: 'Refresh WRs and TAS runs (slow, ~15 min). Untick to only extract inputs.'
+        description: 'Refresh WRs and TAS runs. Untick to only extract inputs.'
         type: boolean
         default: true
   push:

@@ -13,12 +13,16 @@ const CAMPAIGNS = {
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const strip = (s) => (s || '').replace(/\$([0-9a-f]{3}|[a-z$<>])/gi, '').trim();
 
-async function tmio(path, tries = 6) {
+async function tmio(path, tries = 8) {
   for (let i = 0; i < tries; i++) {
     const res = await fetch('https://trackmania.io/api' + path, { headers: { 'User-Agent': UA } });
+    if (res.status === 429) { // rate limited: wait exactly as long as the API asks
+      await sleep((Number(res.headers.get('retry-after')) || 10) * 1000 + 500);
+      continue;
+    }
     const j = await res.json().catch(() => ({}));
     if (!j.error) return j;
-    await sleep(15000 * (i + 1)); // rate limited: back off
+    await sleep(5000);
   }
   throw new Error('tm.io failed ' + path);
 }
@@ -54,7 +58,7 @@ for (const m of maps) {
     const t = j.tops?.[0];
     if (t) wr[m.uid] = { t: t.time, by: t.player?.name, date: (t.timestamp || '').slice(0, 10) };
   } catch (e) { console.warn(e.message); }
-  await sleep(1300);
+  await sleep(700);
 }
 await writeFile('data/wr.json', JSON.stringify(wr));
 

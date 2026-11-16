@@ -229,7 +229,7 @@ async function showInputs(id, btn) {
   }
   const txt = INPUTS[id];
   if (!txt) {
-    cell.innerHTML = `<div class="note">Inputs for this run haven't been extracted yet (new uploads are processed every 6 h). Meanwhile you can use the <a href="${TMTAS}/tools?module=input-extractor" target="_blank" rel="noopener">TMTAS Input Extractor</a> on the replay.</div>`;
+    cell.innerHTML = `<div class="note">Inputs for this run haven't been extracted yet (new uploads are processed every 30 min). Meanwhile you can use the <a href="${TMTAS}/tools?module=input-extractor" target="_blank" rel="noopener">TMTAS Input Extractor</a> on the replay.</div>`;
     return;
   }
   const lines = txt.split('\n').filter((l) => l && !l.startsWith('#')).length;
