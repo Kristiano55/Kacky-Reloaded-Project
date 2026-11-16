@@ -44,6 +44,8 @@ jobs:
         with:
           dotnet-version: '8.0.x'
       - name: Extract TAS inputs from replays (GBX.NET)
+        env:
+          DUMP_PROPS: '1'
         run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
       - name: Commit data
         run: |

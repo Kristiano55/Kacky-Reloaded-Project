@@ -232,8 +232,8 @@ async function showInputs(id, btn) {
     cell.innerHTML = `<div class="note">Inputs for this run haven't been extracted yet (new uploads are processed every 30 min). Meanwhile you can use the <a href="${TMTAS}/tools?module=input-extractor" target="_blank" rel="noopener">TMTAS Input Extractor</a> on the replay.</div>`;
     return;
   }
-  const lines = txt.split('\n').filter((l) => l && !l.startsWith('#')).length;
-  cell.innerHTML = `<div class="inputs"><div class="ibar"><span class="muted">${lines} lines · TMInterface script format</span>
+  const lines = txt.split('\n').filter((l) => l).length;
+  cell.innerHTML = `<div class="inputs"><div class="ibar"><span class="muted">${lines} lines · TM2020 format (same as TMTAS Input Extractor)</span>
     <span><button class="btn pri" data-copy>Copy inputs</button> <a class="btn" download="kacky-${id}.txt" href="data/inputs/${id}.txt">Save .txt</a></span></div>
     <pre>${esc(txt)}</pre></div>`;
   cell.querySelector('[data-copy]').onclick = async (e) => {

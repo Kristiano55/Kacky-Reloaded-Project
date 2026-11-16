@@ -4,7 +4,7 @@ A live TAS tracker for **Kacky Reloaded** (Trackmania 2020): all 525 maps from K
 
 - **Human world records** come from [Trackmania.io](https://trackmania.io/#/clubs/3074) (the KACKY club campaigns)
 - **TAS runs** come from [TMTAS Exchange](https://tmtas.exchange)
-- **Inputs:** every run's inputs are extracted from its replay (with [GBX.NET](https://github.com/BigBang1112/gbx-net)) into `data/inputs/<replayId>.txt`, TMInterface script format. On the site: open a map → **⌨ Inputs** → Copy.
+- **Inputs:** every run's inputs are extracted from its replay (with [GBX.NET](https://github.com/BigBang1112/gbx-net)) into `data/inputs/<replayId>.txt`, in the same TM2020 format as the TMTAS Input Extractor (`<ms> accel 1`, `<ms> steer -52`, …). On the site: open a map → **⌨ Inputs** → Copy.
 
 ## How it works
 
