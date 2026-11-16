@@ -1,4 +1,5 @@
 # Kacky Reloaded TAS inputs · extracted from TMTAS Exchange replay
+0.00-4.74 press up
 0.16 steer -59344
 0.18 steer -65536
 0.19 steer 7224
@@ -248,8 +249,8 @@
 4.72 steer 33542
 4.73 steer -44379
 4.74 steer 65536
-0.00-4.74 press up
 4.76 steer 63988
+4.77-12.21 press up
 4.78 steer 65536
 4.80 steer -51603
 4.81 steer 8257
@@ -322,9 +323,9 @@
 6.14 steer -44895
 6.15 steer -4644
 6.16 steer 43347
+6.17-6.19 press down
 6.18 steer 19609
 6.19 steer 46443
-6.17-6.19 press down
 6.20 steer 65020
 6.21 steer 62956
 6.22 steer 65020
@@ -338,6 +339,7 @@
 6.31 steer -47475
 6.32 steer -53151
 6.33 steer 5160
+6.34-6.47 press down
 6.34 steer 17029
 6.36 steer 12901
 6.37 steer -59344
@@ -349,19 +351,19 @@
 6.44 steer 27350
 6.46 steer 8773
 6.47 steer 10321
-6.34-6.47 press down
+6.48-6.50 press down
 6.48 steer 24770
 6.49 steer 23737
 6.50 steer 18061
-6.48-6.50 press down
 6.51 steer 19609
 6.52 steer 27866
 6.53 steer 0
 6.54 steer -5676
 6.56 steer 33542
+6.58-6.60 press down
 6.58 steer 43347
 6.60 steer -25802
-6.58-6.60 press down
+6.61-6.86 press down
 6.62 steer -516
 6.65 steer 13417
 6.66 steer -25286
@@ -379,19 +381,18 @@
 6.81 steer 44379
 6.83 steer 24770
 6.86 steer -26318
-6.61-6.86 press down
 6.87 steer -53667
 6.89 steer -18577
 6.90 steer -53151
 6.92 steer -50055
 6.94 steer -28382
+6.95-6.97 press down
 6.95 steer -7224
 6.96 steer -41283
 6.97 steer -33542
-6.95-6.97 press down
+6.99-7.00 press down
 6.99 steer -49539
 7.00 steer 44895
-6.99-7.00 press down
 7.01 steer 55731
 7.02 steer -29930
 7.04 steer 35606
@@ -754,4 +755,3 @@
 12.18 steer 18577
 12.20 steer 51087
 12.21 steer 0
-4.77-12.21 press up

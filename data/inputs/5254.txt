@@ -1,4 +1,5 @@
 # Kacky Reloaded TAS inputs · extracted from TMTAS Exchange replay
+0.00-5.43 press up
 0.00 steer -8773
 0.01 steer 47475
 0.03 steer -14965
@@ -268,7 +269,6 @@
 5.41 steer 16513
 5.42 steer 35606
 5.43 steer -56763
-0.00-5.43 press up
 5.45 steer 8257
 5.46 steer -37154
 5.47 steer 45411
@@ -309,6 +309,7 @@
 5.94 steer -45411
 5.96 steer -19609
 5.97 steer -18061
+5.98-6.14 press up
 5.98 steer 6192
 5.99 steer -37670
 6.00 steer -40766
@@ -322,7 +323,6 @@
 6.09 steer -14449
 6.12 steer -14965
 6.13 steer -21157
-5.98-6.14 press up
 6.15 steer 3612
 6.16 steer 1548
 6.17 steer 0
@@ -654,6 +654,7 @@
 10.87 steer -54183
 10.88 steer 35090
 10.89 steer -30446
+10.90-13.19 press up
 10.91 steer 63472
 10.92 steer -30446
 10.93 steer 1032
@@ -702,12 +703,12 @@
 11.58 steer 65536
 11.59 steer -49023
 11.61 steer -1548
+11.62-11.67 press down
 11.62 steer -28898
 11.63 steer -30446
 11.64 steer 59860
 11.66 steer 52119
 11.67 steer -30446
-11.62-11.67 press down
 11.71 steer -53151
 11.73 steer 23221
 11.75 steer 26834
@@ -728,6 +729,7 @@
 12.04 steer 57279
 12.05 steer -55731
 12.06 steer 30446
+12.07-12.34 press down
 12.07 steer -40250
 12.08 steer -31994
 12.09 steer -10321
@@ -748,13 +750,13 @@
 12.29 steer 63472
 12.31 steer -43347
 12.32 steer 65536
-12.07-12.34 press down
 12.36 steer 4128
 12.38 steer 65536
 12.51 steer -41283
 12.53 steer 65536
 12.59 steer 44379
 12.60 steer 65536
+12.61-12.71 press down
 12.61 steer 0
 12.62 steer -58828
 12.63 steer 0
@@ -763,7 +765,6 @@
 12.67 steer 65536
 12.68 steer -15997
 12.69 steer 0
-12.61-12.71 press down
 12.73 steer -54699
 12.74 steer 0
 12.75 steer -63988
@@ -776,6 +777,7 @@
 12.96 steer 56763
 12.97 steer 52119
 12.98 steer 34574
+12.99-13.78 press down
 12.99 steer 0
 13.01 steer 33026
 13.02 steer -6708
@@ -790,12 +792,12 @@
 13.13 steer 63988
 13.14 steer 0
 13.19 steer -26834
-10.90-13.19 press up
 13.21 steer 25802
 13.23 steer 29414
 13.25 steer 56763
 13.27 steer 0
 13.30 steer -21673
+13.31-16.55 press up
 13.31 steer 0
 13.33 steer -29930
 13.35 steer 18061
@@ -830,7 +832,6 @@
 13.76 steer 0
 13.77 steer -8773
 13.78 steer -30962
-12.99-13.78 press down
 13.79 steer 53667
 13.81 steer -23221
 13.83 steer 40766
@@ -1015,11 +1016,12 @@
 16.44 steer -65536
 16.53 steer 40766
 16.55 steer 0
-13.31-16.55 press up
 16.60 steer -65536
 16.72 steer 0
+16.75-17.25 press up
 16.80 steer -29414
 16.81 steer 0
+16.82-17.56 press down
 16.82 steer -13933
 16.84 steer -65536
 16.89 steer 0
@@ -1031,12 +1033,10 @@
 17.19 steer 0
 17.23 steer 43347
 17.24 steer 0
-16.75-17.25 press up
+17.36-17.63 press up
 17.43 steer -15997
 17.44 steer 0
 17.46 steer -65536
-16.82-17.56 press down
-17.36-17.63 press up
 17.70 steer -39734
 17.71 steer -65536
 17.84 steer 0
@@ -1081,6 +1081,7 @@
 18.86 steer -42831
 18.88 steer 15997
 18.89 steer 0
+18.90-19.00 press up
 18.93 steer 39734
 18.94 steer 14449
 18.96 steer -63472
@@ -1088,7 +1089,6 @@
 18.98 steer 8257
 18.99 steer 516
 19.00 steer 0
-18.90-19.00 press up
 19.03 steer -56247
 19.04 steer 0
 19.11 steer 45927
@@ -1160,6 +1160,7 @@
 20.07 steer 63988
 20.08 steer 59860
 20.09 steer 0
+20.10-20.19 press up
 20.11 steer -55215
 20.12 steer -25286
 20.13 steer -31478
@@ -1169,11 +1170,11 @@
 20.17 steer -47991
 20.18 steer -21157
 20.19 steer 0
-20.10-20.19 press up
 20.20 steer -43347
 20.22 steer 8257
 20.24 steer 0
 20.25 steer 17545
+20.26-20.38 press up
 20.26 steer 45411
 20.28 steer -18577
 20.29 steer 15481
@@ -1183,7 +1184,6 @@
 20.34 steer 14449
 20.35 steer 50055
 20.36 steer 7740
-20.26-20.38 press up
 20.39 steer 60892
 20.40 steer 19093
 20.41 steer -11869
@@ -1235,6 +1235,7 @@
 21.02 steer 29930
 21.04 steer 31478
 21.05 steer -41283
+21.07-21.20 press up
 21.07 steer 5676
 21.08 steer -1032
 21.09 steer 57279
@@ -1244,7 +1245,6 @@
 21.15 steer 12901
 21.18 steer 40766
 21.20 steer -37154
-21.07-21.20 press up
 21.21 steer -9805
 21.22 steer -28382
 21.23 steer -9805
@@ -1284,6 +1284,7 @@
 21.68 steer -23221
 21.69 steer -56763
 21.70 steer 63472
+21.72-21.90 press up
 21.72 steer -54183
 21.73 steer 45411
 21.74 steer -17029
@@ -1299,7 +1300,6 @@
 21.87 steer 53151
 21.88 steer -43863
 21.89 steer 13417
-21.72-21.90 press up
 21.91 steer 18577
 21.93 steer -10321
 21.94 steer 26834
@@ -1485,6 +1485,7 @@
 26.64 steer 28382
 26.66 steer 45927
 26.68 steer 0
+26.69-26.85 press up
 26.71 steer -50571
 26.72 steer -44895
 26.73 steer 0
@@ -1495,7 +1496,6 @@
 26.81 steer 0
 26.83 steer -54699
 26.85 steer 65020
-26.69-26.85 press up
 26.87 steer 0
 26.88 steer -2064
 26.89 steer -60376
@@ -1561,6 +1561,7 @@
 27.79 steer 24253
 27.80 steer 35090
 27.83 steer -18061
+27.84-27.93 press up
 27.84 steer 0
 27.85 steer 18577
 27.86 steer 65536
@@ -1569,7 +1570,6 @@
 27.89 steer 51603
 27.90 steer 16513
 27.92 steer 0
-27.84-27.93 press up
 27.94 steer 29930
 27.95 steer -34058
 27.96 steer -19093
@@ -1694,13 +1694,13 @@
 30.59 steer -65536
 30.60 steer -11869
 30.62 steer -21673
+30.64-30.73 press up
 30.64 steer -65536
 30.68 steer 41799
 30.69 steer 60376
 30.70 steer -18577
 30.71 steer -65536
 30.73 steer 8257
-30.64-30.73 press up
 30.74 steer -65536
 30.78 steer -43863
 30.79 steer -65536
@@ -1726,6 +1726,7 @@
 31.28 steer -65536
 31.32 steer -50571
 31.34 steer -65536
+31.36-31.53 press down
 31.39 steer -17545
 31.41 steer 58312
 31.42 steer -8257
@@ -1736,7 +1737,6 @@
 31.49 steer -41283
 31.50 steer -33026
 31.52 steer -65536
-31.36-31.53 press down
 31.54 steer 37154
 31.55 steer -1032
 31.58 steer -65536
@@ -1752,8 +1752,8 @@
 31.79 steer -3612
 31.80 steer -14965
 31.81 steer -6192
-31.82 steer -62440
 31.82-31.83 press up
+31.82 steer -62440
 31.86 steer 12901
 31.87 steer 44895
 31.88 steer 0

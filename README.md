@@ -4,7 +4,7 @@ A live TAS tracker for **Kacky Reloaded** (Trackmania 2020): all 525 maps from K
 
 - **Human world records** come from [Trackmania.io](https://trackmania.io/#/clubs/3074) (the KACKY club campaigns)
 - **TAS runs** come from [TMTAS Exchange](https://tmtas.exchange)
-- **Inputs:** every run has a replay download. Drop the replay into the TMTAS [Input Extractor](https://tmtas.exchange/tools) to get its inputs.
+- **Inputs:** every run's inputs are extracted from its replay (with [GBX.NET](https://github.com/BigBang1112/gbx-net)) into `data/inputs/<replayId>.txt`, TMInterface script format. On the site: open a map → **⌨ Inputs** → Copy.
 
 ## How it works
 
@@ -31,6 +31,10 @@ Tags live in `data/classify.json`, keyed by map UID:
 
 They're edited in the tracker sheet's Maps tab, then synced into this file. The site's Stats tab and badges are built from them.
 Score = average of Great 100 · Good 75 · Okay 50 · Meh 25.
+
+## Player profiles
+
+Click any player name (map page, Stats tab) or go to `#player-<name>`: best TASes, time saved, cuts, ratings, per-edition breakdown, every run and any human WRs they hold.
 
 ## Run locally
 

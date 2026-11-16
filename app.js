@@ -69,6 +69,8 @@ function readHash() {
   if (location.hash === '#stats') state.view = 'stats';
   const mm = location.hash.match(/map-(\d+)/);
   if (mm) setTimeout(() => open(+mm[1]), 0);
+  const pm = location.hash.match(/player-(.+)/);
+  if (pm) setTimeout(() => openPlayer(decodeURIComponent(pm[1])), 0);
 }
 
 function render() {
@@ -117,7 +119,8 @@ async function open(id) {
   history.replaceState(null, '', `#map-${id}`);
   const dlg = $('#modal');
   draw(m);
-  dlg.showModal();
+  if (!dlg.open) dlg.showModal();
+  $('#m-body').scrollTop = 0;
   // live refresh of TAS runs straight from TMTAS Exchange
   try {
     const j = await fetch(`${TMTAS}/api/tick/leaderboard?map_uid=${m.uid}`).then((r) => r.json());
@@ -139,17 +142,17 @@ function draw(m, live) {
   </div>
   <div class="m-sec">
     <div class="cmp">
-      <div class="box"><div class="l">World record · human</div><div class="big">${fmt(m.wr?.t)}</div><div>${esc(m.wr?.by || '—')} <span class="muted">${esc(m.wr?.date || '')}</span></div></div>
-      <div class="box tasb"><div class="l">Best TAS</div><div class="big">${fmt(m.best?.t)}</div><div>${esc(m.best?.by || 'No TAS yet')}</div></div>
+      <div class="box"><div class="l">World record · human</div><div class="big">${fmt(m.wr?.t)}</div><div>${m.wr?.by ? P(m.wr.by) : '—'} <span class="muted">${esc(m.wr?.date || '')}</span></div></div>
+      <div class="box tasb"><div class="l">Best TAS</div><div class="big">${fmt(m.best?.t)}</div><div>${m.best ? P(m.best.by) : 'No TAS yet'}</div></div>
     </div>
     ${tags(m)}${m.gap != null ? `<div class="gapline ${m.gap < 0 ? 'neg' : 'pos'}">${fmtGap(m.gap)} · TAS is ${(Math.abs(m.gap) / m.wr.t * 100).toFixed(2)}% ${m.gap < 0 ? 'faster' : 'slower'} than the WR</div>` : ''}
   </div>
   <div class="m-sec">
     <h3>TAS runs ${live ? '<span class="muted" style="font-size:11px">· live</span>' : ''}</h3>
     ${m.runs.length ? `<table><tr><th>#</th><th>Runner</th><th>Time</th><th>Category</th><th></th></tr>
-      ${m.runs.map((r, i) => `<tr><td class="mono">${i + 1}</td><td>${esc(r.by)}</td><td class="mono">${fmt(r.t)}</td><td class="muted">${esc(r.cat)}</td>
-      <td style="text-align:right"><a class="btn pri" href="${esc(r.replay)}">⬇ Replay</a></td></tr>`).join('')}</table>
-      <div class="note">To get the inputs, download the replay and drop it into the <a href="${TMTAS}/tools" target="_blank" rel="noopener">TMTAS Input Extractor</a>. It supports TM2020 and runs locally in your browser.</div>`
+      ${m.runs.map((r, i) => `<tr><td class="mono">${i + 1}</td><td>${P(r.by)}</td><td class="mono">${fmt(r.t)}</td><td class="muted">${esc(r.cat)}</td>
+      <td style="text-align:right;white-space:nowrap"><button class="btn pri" onclick="showInputs(${r.id},this)">⌨ Inputs</button> <a class="btn" href="${esc(r.replay)}" title="Download replay">⬇</a></td></tr>
+      <tr class="inrow" id="in-${r.id}" hidden><td colspan="5"></td></tr>`).join('')}</table>`
       : `<p class="muted">No TAS on TMTAS Exchange yet. Be the first: <a href="${TMTAS}/upload" target="_blank" rel="noopener">upload a replay</a>.</p>`}
   </div>
   <div class="m-sec"><div class="links">
@@ -162,6 +165,8 @@ function draw(m, live) {
 
 $('#modal').addEventListener('close', () => history.replaceState(null, '', `#kr${state.ed || 'all'}`));
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') e.target.close(); });
+const P = (n) => n ? `<a class="plink" href="#player-${encodeURIComponent(n)}" onclick="event.stopPropagation();openPlayer(decodeURIComponent('${encodeURIComponent(n)}'));return false">${esc(n)}</a>` : '';
+
 function tags(m) {
   const t = [];
   if (m.cut && m.cut !== 'No cut') t.push(`<span class="tag cut-${m.cut.split(' ')[0].toLowerCase()}">${esc(m.cut)}</span>`);
@@ -208,8 +213,71 @@ function renderStats() {
     ${biggest.length ? '' : '<tr><td colspan="4" class="muted">No TAS faster than the WR yet.</td></tr>'}${biggest.map((m) => `<tr class="click" onclick="openMap(${m.id})"><td><b style="color:${ED_COL[m.ed]}">KR${m.ed}</b> #${m.id}</td><td class="mono">${fmt(m.wr.t)}</td><td class="mono" style="color:var(--acc2)">${fmt(m.best.t)}</td><td class="mono neg">${fmtGap(m.gap)}</td></tr>`).join('')}</table></div></div>
   </div>
   <div class="panel"><h3>Runners · ${runners.length}</h3>${runners.length ? '' : '<p class="muted">No TAS runs in this edition yet.</p>'}<div class="tw"><table><tr><th>#</th><th>Runner</th><th>TASes</th><th>Saved</th><th>Normal cuts</th><th>Ubers</th><th>Noseboosts</th><th>Avg score</th></tr>
-  ${runners.map((r, i) => `<tr><td class="mono muted">${i + 1}</td><td><b>${esc(r.n)}</b></td><td class="mono">${r.ms.length}</td><td class="mono neg">${fmtGap(r.saved)}</td>
+  ${runners.map((r, i) => `<tr><td class="mono muted">${i + 1}</td><td><b>${P(r.n)}</b></td><td class="mono">${r.ms.length}</td><td class="mono neg">${fmtGap(r.saved)}</td>
     ${['Normal cut', 'Uber', 'Noseboost'].map((k) => `<td class="mono">${r.ms.filter((m) => m.cut === k).length}</td>`).join('')}<td class="mono">${score(r.ms)}</td></tr>`).join('')}</table></div></div>`;
 }
+
+const INPUTS = {};
+async function showInputs(id, btn) {
+  const row = document.getElementById('in-' + id);
+  if (!row.hidden) { row.hidden = true; return; }
+  row.hidden = false;
+  const cell = row.firstElementChild;
+  cell.innerHTML = '<div class="muted">Loading inputs…</div>';
+  if (INPUTS[id] === undefined) {
+    INPUTS[id] = await fetch(`data/inputs/${id}.txt`, { cache: 'no-cache' }).then((r) => (r.ok ? r.text() : null)).catch(() => null);
+  }
+  const txt = INPUTS[id];
+  if (!txt) {
+    cell.innerHTML = `<div class="note">Inputs for this run haven't been extracted yet (new uploads are processed every 6 h). Meanwhile you can use the <a href="${TMTAS}/tools?module=input-extractor" target="_blank" rel="noopener">TMTAS Input Extractor</a> on the replay.</div>`;
+    return;
+  }
+  const lines = txt.split('\n').filter((l) => l && !l.startsWith('#')).length;
+  cell.innerHTML = `<div class="inputs"><div class="ibar"><span class="muted">${lines} lines · TMInterface script format</span>
+    <span><button class="btn pri" data-copy>Copy inputs</button> <a class="btn" download="kacky-${id}.txt" href="data/inputs/${id}.txt">Save .txt</a></span></div>
+    <pre>${esc(txt)}</pre></div>`;
+  cell.querySelector('[data-copy]').onclick = async (e) => {
+    await navigator.clipboard.writeText(txt);
+    e.target.textContent = 'Copied ✓'; setTimeout(() => (e.target.textContent = 'Copy inputs'), 1500);
+  };
+}
+window.showInputs = showInputs;
+
+function openPlayer(name) {
+  history.replaceState(null, '', '#player-' + encodeURIComponent(name));
+  const runs = [];
+  MAPS.forEach((m) => m.runs.forEach((r, i) => { if (r.by === name) runs.push({ m, r, rank: i + 1 }); }));
+  const tops = runs.filter((x) => x.rank === 1);
+  const wrs = MAPS.filter((m) => m.wr?.by === name);
+  const saved = tops.reduce((s, x) => s + (x.m.gap ?? 0), 0);
+  const cnt = (k) => tops.filter((x) => x.m.cut === k).length;
+  const perEd = [1, 2, 3, 4, 5, 6, 7].map((e) => ({ e, n: tops.filter((x) => x.m.ed === e).length })).filter((x) => x.n);
+  const maxEd = Math.max(1, ...perEd.map((x) => x.n));
+  runs.sort((a, b) => a.m.id - b.m.id);
+  $('#m-body').innerHTML = `
+  <div class="m-head phead">
+    <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>
+    <div class="t"><div class="avatar">${esc(name.slice(0, 1).toUpperCase())}</div><h2>${esc(name)}</h2>
+    <p>${tops.length} best TAS${tops.length === 1 ? '' : 'es'} · ${runs.length} run${runs.length === 1 ? '' : 's'} uploaded${wrs.length ? ` · holds ${wrs.length} human WR${wrs.length === 1 ? '' : 's'}` : ''}</p></div>
+  </div>
+  <div class="m-sec"><div class="pstats">
+    <div class="box"><div class="l">Best TASes</div><div class="big">${tops.length}</div></div>
+    <div class="box"><div class="l">Time saved vs WR</div><div class="big neg">${saved ? fmtGap(saved) : '—'}</div></div>
+    <div class="box"><div class="l">Beats WR</div><div class="big">${tops.filter((x) => x.m.gap < 0).length}</div></div>
+    <div class="box"><div class="l">Avg score</div><div class="big">${score(tops.map((x) => x.m))}</div></div>
+  </div>
+  <div class="tags" style="margin-top:12px"><span class="tag cut-normal">${cnt('Normal cut')} Normal cuts</span><span class="tag cut-uber">${cnt('Uber')} Ubers</span><span class="tag cut-noseboost">${cnt('Noseboost')} Noseboosts</span></div>
+  </div>
+  ${perEd.length ? `<div class="m-sec"><h3>By edition</h3>${perEd.map((x) => `<div class="edbar"><b style="color:${ED_COL[x.e]}">KR${x.e}</b><div class="meter" style="--c:${ED_COL[x.e]}"><i style="width:${(x.n / maxEd) * 100}%"></i></div><span class="mono">${x.n}</span></div>`).join('')}</div>` : ''}
+  <div class="m-sec"><h3>TAS runs</h3>${runs.length ? `<table><tr><th>Map</th><th>Time</th><th>Rank</th><th>vs WR</th><th></th></tr>
+    ${runs.map((x) => { const g = x.m.wr ? x.r.t - x.m.wr.t : null; return `<tr class="click" onclick="openMap(${x.m.id})"><td><b style="color:${ED_COL[x.m.ed]}">KR${x.m.ed}</b> #${x.m.id}</td>
+      <td class="mono">${fmt(x.r.t)}</td><td class="mono">${x.rank === 1 ? '<span class="tag r-great">#1</span>' : '#' + x.rank}</td>
+      <td class="mono ${g < 0 ? 'neg' : 'pos'}">${g == null ? '—' : fmtGap(g)}</td><td>${tags(x.m).replace('class="tags"', 'class="tags" style="margin:0"')}</td></tr>`; }).join('')}</table>` : '<p class="muted">No TAS runs.</p>'}</div>
+  ${wrs.length ? `<div class="m-sec"><h3>Human world records</h3><div class="links">${wrs.map((m) => `<button class="btn" onclick="openMap(${m.id})">KR${m.ed} #${m.id} · ${fmt(m.wr.t)}</button>`).join('')}</div></div>` : ''}`;
+  const dlg = $('#modal');
+  if (!dlg.open) dlg.showModal();
+  $('#m-body').scrollTop = 0;
+}
+window.openPlayer = openPlayer;
 
 init();

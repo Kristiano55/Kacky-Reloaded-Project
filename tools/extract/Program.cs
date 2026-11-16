@@ -92,7 +92,12 @@ static string Extract(CGameCtnReplayRecord replay)
     }
     foreach (var (k, start) in open) sb.AppendLine($"{S(start)}-{S(last)} press {k}");
     Console.WriteLine("  input types: " + string.Join(",", types));
-    return sb.ToString();
+    var lines = sb.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(l => l.TrimEnd('\r')).ToList();
+    var head = lines.Where(l => l.StartsWith("#"));
+    var body = lines.Where(l => !l.StartsWith("#"))
+        .OrderBy(l => double.Parse(l.Split(' ')[0].Split('-')[0], System.Globalization.CultureInfo.InvariantCulture))
+        .ThenBy(l => l.Contains("steer") ? 1 : 0);
+    return string.Join("\n", head.Concat(body)) + "\n";
 
     void Key(string key, dynamic inp, int ms)
     {
