@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kacky Reloaded · TAS Project</title>
+<meta name="description" content="Every Kacky Reloaded map (KR1–KR7): live world records from Trackmania.io against the best TAS runs from TMTAS Exchange.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="grain"></div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="eyebrow"><span class="dot"></span> Trackmania 2020 · Tool-assisted</div>
+    <h1>KACKY<span class="slash">/</span><em>RELOADED</em></h1>
+    <p class="sub">525 maps, KR1 through KR7. The best human world records against the best TAS runs.</p>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<nav class="bar">
+  <div class="wrap bar-in">
+    <div class="eds" id="eds"></div>
+    <div class="parts" id="parts"></div>
+    <div class="tools">
+      <input id="q" type="search" placeholder="Search #, name, author, runner…" autocomplete="off">
+      <select id="filter">
+        <option value="all">All maps</option>
+        <option value="tas">Has TAS</option>
+        <option value="none">No TAS yet</option>
+        <option value="beat">TAS beats WR</option>
+        <option value="behind">TAS slower than WR</option>
+      </select>
+      <select id="sort">
+        <option value="id">Map #</option>
+        <option value="gap">Biggest TAS gain</option>
+        <option value="wr">WR time</option>
+        <option value="recent">Recent WR</option>
+      </select>
+    </div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <div class="progress" id="progress"></div>
+  <div class="grid" id="grid"></div>
+  <p class="empty" id="empty" hidden>No maps match.</p>
+</main>
+
+<dialog id="modal">
+  <div class="m-in" id="m-body"></div>
+</dialog>
+
+<footer class="wrap foot">
+  <span>WRs: <a href="https://trackmania.io/#/clubs/3074" target="_blank" rel="noopener">Trackmania.io</a> · TAS: <a href="https://tmtas.exchange" target="_blank" rel="noopener">TMTAS Exchange</a></span>
+  <span id="updated"></span>
+</footer>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>
