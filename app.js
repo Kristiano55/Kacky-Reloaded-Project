@@ -13,13 +13,15 @@ const fmtGap = (d) => (d == null ? '' : (d < 0 ? '−' : '+') + fmt(Math.abs(d))
 const state = { ed: 0, q: '', filter: 'all', sort: 'id', view: 'maps' };
 const SCORE = { Great: 100, Good: 75, Okay: 50, Meh: 25 };
 let MAPS = [];
+let VIDEOS = [];
 
 const load = (f, d) => fetch(f, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : d)).catch(() => d);
 
 async function init() {
-  const [maps, wr, tas, upd, cls] = await Promise.all([
-    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}), load('data/classify.json', {}),
+  const [maps, wr, tas, upd, cls, vids] = await Promise.all([
+    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}), load('data/classify.json', {}), load('data/videos.json', []),
   ]);
+  VIDEOS = vids;
   MAPS = maps.map((m) => {
     const runs = (tas[m.uid] || []).slice().sort((a, b) => a.t - b.t);
     const best = runs[0];
@@ -56,7 +58,7 @@ function buildChips() {
   $('#eds').innerHTML = ['All', 1, 2, 3, 4, 5, 6, 7].map((e, i) =>
     `<button class="chip" data-ed="${i}" style="--c:${ED_COL[i] || 'var(--acc)'}">${i ? 'KR' + e : e}</button>`).join('');
   $('#eds').onclick = (e) => { const b = e.target.closest('[data-ed]'); if (b) { state.ed = +b.dataset.ed; sync(); } };
-  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; history.replaceState(null, '', state.view === 'stats' ? '#stats' : `#kr${state.ed || 'all'}`); render(); window.scrollTo({ top: $('main').offsetTop - 70, behavior: 'smooth' }); } };
+  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; history.replaceState(null, '', state.view !== 'maps' ? '#' + state.view : `#kr${state.ed || 'all'}`); render(); window.scrollTo({ top: $('main').offsetTop - 70, behavior: 'smooth' }); } };
   $('#q').oninput = (e) => { state.q = e.target.value.toLowerCase(); render(); };
   $('#filter').onchange = (e) => { state.filter = e.target.value; render(); };
   $('#sort').onchange = (e) => { state.sort = e.target.value; render(); };
@@ -67,6 +69,7 @@ function readHash() {
   const m = location.hash.match(/kr(\d|all)/);
   if (m) state.ed = m[1] === 'all' ? 0 : +m[1];
   if (location.hash === '#stats') state.view = 'stats';
+  if (location.hash === '#videos') state.view = 'videos';
   const mm = location.hash.match(/map-(\d+)/);
   if (mm) setTimeout(() => open(+mm[1]), 0);
   const pm = location.hash.match(/player-(.+)/);
@@ -76,9 +79,11 @@ function readHash() {
 function render() {
   document.querySelectorAll('#eds .chip').forEach((b) => b.classList.toggle('on', +b.dataset.ed === state.ed));
   document.querySelectorAll('#views .chip').forEach((b) => b.classList.toggle('on', b.dataset.view === state.view));
-  const stats = state.view === 'stats';
-  $('#statsView').hidden = !stats; $('#grid').hidden = stats; $('.tools').style.visibility = stats ? 'hidden' : '';
+  const stats = state.view === 'stats', vids = state.view === 'videos';
+  $('#statsView').hidden = !stats; $('#videosView').hidden = !vids; $('#grid').hidden = stats || vids;
+  $('.tools').style.visibility = stats || vids ? 'hidden' : '';
   if (stats) { $('#empty').hidden = true; renderStats(); return; }
+  if (vids) { $('#empty').hidden = true; renderVideos(); return; }
   let list = MAPS.filter((m) => !state.ed || m.ed === state.ed);
   if (state.q) list = list.filter((m) => [m.id, m.name, m.author, m.wr?.by, ...m.runs.map((r) => r.by)].join(' ').toLowerCase().includes(state.q));
   const f = state.filter;
@@ -155,6 +160,7 @@ function draw(m, live) {
       <tr class="inrow" id="in-${r.id}" hidden><td colspan="5"></td></tr>`).join('')}</table>`
       : `<p class="muted">No TAS on TMTAS Exchange yet. Be the first: <a href="${TMTAS}/upload" target="_blank" rel="noopener">upload a replay</a>.</p>`}
   </div>
+  ${(() => { const v = VIDEOS.filter((x) => x.map === m.id); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
   <div class="m-sec"><div class="links">
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/leaderboard/${esc(m.uid)}">Trackmania.io leaderboard</a>
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/campaigns/3074/${m.campaign}">Campaign</a>
@@ -273,11 +279,48 @@ function openPlayer(name) {
     ${runs.map((x) => { const g = x.m.wr ? x.r.t - x.m.wr.t : null; return `<tr class="click" onclick="openMap(${x.m.id})"><td><b style="color:${ED_COL[x.m.ed]}">KR${x.m.ed}</b> #${x.m.id}</td>
       <td class="mono">${fmt(x.r.t)}</td><td class="mono">${x.rank === 1 ? '<span class="tag r-great">#1</span>' : '#' + x.rank}</td>
       <td class="mono ${g < 0 ? 'neg' : 'pos'}">${g == null ? '—' : fmtGap(g)}</td><td>${tags(x.m).replace('class="tags"', 'class="tags" style="margin:0"')}</td></tr>`; }).join('')}</table>` : '<p class="muted">No TAS runs.</p>'}</div>
+  ${(() => { const v = VIDEOS.filter((x) => x.runner && x.runner.toLowerCase() === name.toLowerCase()); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
   ${wrs.length ? `<div class="m-sec"><h3>Human world records</h3><div class="links">${wrs.map((m) => `<button class="btn" onclick="openMap(${m.id})">KR${m.ed} #${m.id} · ${fmt(m.wr.t)}</button>`).join('')}</div></div>` : ''}`;
   const dlg = $('#modal');
   if (!dlg.open) dlg.showModal();
   $('#m-body').scrollTop = 0;
 }
 window.openPlayer = openPlayer;
+
+// ---- videos ----
+function embed(url) {
+  let u; try { u = new URL(url); } catch { return null; }
+  const h = u.hostname.replace(/^www\.|^m\./, '');
+  const t = u.searchParams.get('t') || u.searchParams.get('start');
+  const start = t ? (/^\d+$/.test(t) ? t : (t.match(/(\d+)h/)?.[1] || 0) * 3600 + (t.match(/(\d+)m/)?.[1] || 0) * 60 + +(t.match(/(\d+)s/)?.[1] || 0)) : 0;
+  let yt = null;
+  if (h === 'youtu.be') yt = u.pathname.slice(1);
+  else if (h.endsWith('youtube.com')) yt = u.searchParams.get('v') || u.pathname.match(/\/(?:shorts|embed|live)\/([\w-]+)/)?.[1];
+  if (yt) return { kind: 'iframe', src: `https://www.youtube-nocookie.com/embed/${yt}${start ? '?start=' + start : ''}`, thumb: `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` };
+  const parent = location.hostname || 'localhost';
+  if (h === 'clips.twitch.tv') return { kind: 'iframe', src: `https://clips.twitch.tv/embed?clip=${u.pathname.slice(1)}&parent=${parent}&autoplay=false` };
+  if (h === 'twitch.tv') {
+    const clip = u.pathname.match(/\/clip\/([\w-]+)/)?.[1]; if (clip) return { kind: 'iframe', src: `https://clips.twitch.tv/embed?clip=${clip}&parent=${parent}&autoplay=false` };
+    const vid = u.pathname.match(/\/videos\/(\d+)/)?.[1]; if (vid) return { kind: 'iframe', src: `https://player.twitch.tv/?video=${vid}&parent=${parent}&autoplay=false${t ? '&time=' + t : ''}` };
+  }
+  if (h === 'streamable.com') return { kind: 'iframe', src: `https://streamable.com/e/${u.pathname.split('/').pop()}` };
+  if (/\.(mp4|webm|mov)(\?|$)/i.test(u.pathname)) return { kind: 'video', src: url };
+  return null;
+}
+function vcard(v) {
+  const e = embed(v.url), m = v.map ? MAPS.find((x) => x.id === v.map) : null;
+  const media = !e ? `<a class="vlink" href="${esc(v.url)}" target="_blank" rel="noopener">▶ Open video</a>`
+    : e.kind === 'video' ? `<video src="${esc(e.src)}" controls preload="metadata"></video>`
+    : `<iframe src="${esc(e.src)}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+  return `<div class="vcard"><div class="vmedia">${media}</div><div class="vmeta">
+    <div><b>${esc(v.title || (m ? `KR${m.ed} #${m.id}` : 'Video'))}</b></div>
+    <div class="muted">${m ? `<a href="#map-${m.id}" onclick="openMap(${m.id});return false" style="color:${ED_COL[m.ed]}">KR${m.ed} #${m.id}</a>` : 'Compilation'}${v.runner ? ' · ' + P(v.runner) : ''} · <a href="${esc(v.url)}" target="_blank" rel="noopener">source ↗</a></div></div></div>`;
+}
+function renderVideos() {
+  const list = VIDEOS.filter((v) => { const m = v.map ? MAPS.find((x) => x.id === v.map) : null; return !state.ed || m?.ed === state.ed; });
+  $('#videosView').innerHTML = list.length
+    ? `<div class="scope" style="--c:${ED_COL[state.ed] || 'var(--acc)'}">${state.ed ? 'KR' + state.ed + ' videos' : 'Videos'} · ${list.length}</div><div class="vgrid">${list.map(vcard).join('')}</div>`
+    : `<div class="panel"><h3>Videos</h3><p class="muted">No videos ${state.ed ? 'for KR' + state.ed + ' ' : ''}yet. Add a YouTube, Twitch, Streamable or .mp4 link in the tracker sheet's <b>Videos</b> tab and it shows up here.</p></div>`;
+}
 
 init();
