@@ -50,22 +50,10 @@ if (!maps.length || !('thumb' in maps[0]) || process.argv.includes('--maps')) {
   await writeFile('data/maps.json', JSON.stringify(maps, null, 1));
 }
 
-// 2. Human WRs from Trackmania.io (paced to respect rate limits)
-const wr = await readJson('data/wr.json', {});
-for (const m of maps) {
-  try {
-    const j = await tmio(`/leaderboard/${m.lb}/${m.uid}?offset=0&length=1`);
-    const t = j.tops?.[0];
-    if (t) wr[m.uid] = { t: t.time, by: t.player?.name, date: (t.timestamp || '').slice(0, 10) };
-  } catch (e) { console.warn(e.message); }
-  await sleep(700);
-}
-await writeFile('data/wr.json', JSON.stringify(wr));
-
-// 3. TAS runs from TMTAS Exchange
+// 2. TAS runs from TMTAS Exchange (fast: all maps every run)
 const tas = {};
-for (let i = 0; i < maps.length; i += 5) {
-  await Promise.all(maps.slice(i, i + 5).map(async (m) => {
+for (let i = 0; i < maps.length; i += 8) {
+  await Promise.all(maps.slice(i, i + 8).map(async (m) => {
     const j = await fetch('https://tmtas.exchange/api/tick/leaderboard?map_uid=' + m.uid, { headers: { 'User-Agent': UA } })
       .then((r) => r.json()).catch(() => null);
     if (!j?.records?.length) return;
@@ -75,8 +63,29 @@ for (let i = 0; i < maps.length; i += 5) {
       id: Number(new URL(r.replay_url).searchParams.get('id')), cat: cats[r.category_id] || '',
     }));
   }));
-  await sleep(300);
+  await sleep(150);
 }
 await writeFile('data/tas.json', JSON.stringify(tas));
+console.log(`TAS: ${Object.keys(tas).length} maps with runs`);
+
+// 3. Human WRs from Trackmania.io — rate limited, so each run gets a time budget
+//    and refreshes the maps that were checked longest ago first.
+const BUDGET = Number(process.env.WR_BUDGET_MIN || 10) * 60_000;
+const wr = await readJson('data/wr.json', {});
+const queue = maps.slice().sort((a, b) => (wr[a.uid]?.c || 0) - (wr[b.uid]?.c || 0));
+const t0 = Date.now();
+let checked = 0;
+for (const m of queue) {
+  if (Date.now() - t0 > BUDGET) break;
+  try {
+    const j = await tmio(`/leaderboard/${m.lb}/${m.uid}?offset=0&length=1`);
+    const t = j.tops?.[0];
+    if (t) wr[m.uid] = { t: t.time, by: t.player?.name, date: (t.timestamp || '').slice(0, 10), c: Date.now() };
+    else wr[m.uid] = { ...(wr[m.uid] || {}), c: Date.now() };
+    checked++;
+  } catch (e) { console.warn(e.message); }
+  await sleep(700);
+}
+await writeFile('data/wr.json', JSON.stringify(wr));
+console.log(`WR: refreshed ${checked}/${maps.length} (oldest first) in ${Math.round((Date.now() - t0) / 1000)}s`);
 await writeFile('data/updated.json', JSON.stringify({ at: new Date().toISOString() }));
-console.log(`maps ${maps.length}, wrs ${Object.keys(wr).length}, maps with TAS ${Object.keys(tas).length}`);

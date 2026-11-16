@@ -23,7 +23,7 @@ async function init() {
   MAPS = maps.map((m) => {
     const runs = (tas[m.uid] || []).slice().sort((a, b) => a.t - b.t);
     const best = runs[0];
-    const w = wr[m.uid];
+    const w = wr[m.uid]?.t ? wr[m.uid] : undefined;
     return { ...m, wr: w, runs, best, gap: best && w ? best.t - w.t : null, cut: cls[m.uid]?.cut || '', rating: cls[m.uid]?.rating || '' };
   });
   if (upd.at) $('#updated').textContent = 'Data refreshed ' + new Date(upd.at).toLocaleString();
