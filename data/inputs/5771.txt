@@ -87,8 +87,8 @@
 3830 steer -24
 3850 steer 108
 3900 steer -40
-3910 steer -46
 3910 brake 1
+3910 steer -46
 3940 steer 10
 3960 steer -103
 3980 steer -19
@@ -209,8 +209,8 @@
 7350 steer 81
 7360 steer 95
 7370 steer 22
-7380 steer 73
 7380 brake 0
+7380 steer 73
 7440 steer 7
 7460 steer 100
 7470 steer 60
@@ -235,5 +235,5 @@
 8240 steer 4
 8290 steer 91
 8340 steer 86
-8380 steer 0
 8380 accel 0
+8380 steer 0

@@ -76,6 +76,6 @@
 8260 steer 116
 8300 steer -121
 8310 brake 1
-8380 steer 0
 8380 accel 0
 8380 brake 0
+8380 steer 0

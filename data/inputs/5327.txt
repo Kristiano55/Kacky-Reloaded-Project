@@ -515,12 +515,12 @@
 11110 steer 113
 11140 steer 120
 11150 steer 124
-11170 steer -76
 11170 accel 0
+11170 steer -76
 11180 steer 26
 11200 steer 56
-11210 steer 79
 11210 accel 1
+11210 steer 79
 11230 steer 91
 11240 steer 93
 11260 steer 95
@@ -1082,10 +1082,10 @@
 25850 steer 96
 25860 steer -108
 25870 steer 84
-25900 steer 2
 25900 accel 0
-25910 steer 120
+25900 steer 2
 25910 accel 1
+25910 steer 120
 25920 steer 102
 25940 steer 52
 25950 steer 110
@@ -1244,5 +1244,5 @@
 28320 steer 69
 28340 steer 23
 28350 steer 107
-28360 steer 0
 28360 accel 0
+28360 steer 0

@@ -170,5 +170,5 @@
 11420 steer -81
 11450 steer -66
 11480 steer -73
-11500 steer 0
 11500 accel 0
+11500 steer 0

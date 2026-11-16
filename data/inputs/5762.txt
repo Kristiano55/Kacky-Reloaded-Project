@@ -202,16 +202,16 @@
 13090 steer 123
 13170 steer -91
 13180 steer -98
-13210 steer 0
 13210 brake 1
+13210 steer 0
 13240 steer 46
 13290 steer -28
 13350 steer 124
 13390 steer 85
 13430 brake 0
 13480 brake 1
-13490 steer -36
 13490 brake 0
+13490 steer -36
 13550 brake 1
 13560 steer -42
 13590 steer -34
@@ -225,6 +225,6 @@
 14160 steer -21
 14190 steer 125
 14230 steer -35
-14320 steer 0
 14320 accel 0
 14320 brake 0
+14320 steer 0

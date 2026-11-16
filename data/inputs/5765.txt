@@ -109,5 +109,5 @@
 8010 steer 76
 8020 steer 73
 8030 steer 56
-8060 steer 0
 8060 accel 0
+8060 steer 0

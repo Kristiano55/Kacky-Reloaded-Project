@@ -124,5 +124,5 @@
 9550 steer 91
 9570 steer 37
 9580 steer -5
-9600 steer 0
 9600 accel 0
+9600 steer 0

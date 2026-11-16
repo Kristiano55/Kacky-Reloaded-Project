@@ -355,9 +355,9 @@
 18420 steer 58
 18490 steer -33
 18540 steer 71
-18550 steer 0
 18550 accel 0
 18550 brake 1
+18550 steer 0
 18820 steer 115
 18860 steer -109
 18950 steer -11
@@ -458,5 +458,5 @@
 24420 steer -91
 24480 steer -37
 24620 steer 112
-24630 steer 0
 24630 accel 0
+24630 steer 0

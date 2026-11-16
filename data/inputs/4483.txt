@@ -79,12 +79,12 @@
 4240 steer 0
 4310 steer -8
 4350 steer 45
-4370 steer -29
 4370 accel 0
+4370 steer -29
 4400 steer -53
 4440 steer 0
-4520 steer 108
 4520 brake 1
+4520 steer 108
 4530 accel 1
 4630 steer -44
 4650 steer -94
@@ -93,8 +93,8 @@
 4800 brake 0
 4900 steer 0
 5070 steer 101
-5080 steer 8
 5080 accel 0
+5080 steer 8
 5090 steer right
 5100 accel 1
 5110 brake 1
@@ -110,8 +110,8 @@
 5430 brake 0
 5440 steer 83
 5480 brake 1
-5520 steer 118
 5520 accel 1
+5520 steer 118
 5540 steer 28
 5620 steer 14
 5670 steer -94
@@ -131,8 +131,8 @@
 6250 steer -84
 6260 steer -93
 6290 accel 0
-6300 steer -115
 6300 accel 1
+6300 steer -115
 6380 steer 54
 6440 steer -37
 6480 steer -11
@@ -275,6 +275,6 @@
 9840 steer 69
 9850 steer 71
 9860 steer 121
-9880 steer 0
 9880 accel 0
 9880 brake 0
+9880 steer 0

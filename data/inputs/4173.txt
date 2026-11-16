@@ -90,16 +90,16 @@
 2510 steer -7
 2540 steer 119
 2560 steer right
-2580 steer 49
 2580 accel 0
+2580 steer 49
 2600 steer right
 2620 steer 75
 2630 steer 17
 2650 steer right
 2680 steer 105
 2690 steer 66
-2710 steer right
 2710 accel 1
+2710 steer right
 2760 steer 96
 2770 steer 66
 2790 steer 38
@@ -300,5 +300,5 @@
 7180 steer -37
 7210 steer -74
 7230 steer 33
-7250 steer 0
 7250 accel 0
+7250 steer 0

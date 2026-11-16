@@ -102,7 +102,10 @@ static string Extract(CGameCtnReplayRecord replay)
     foreach (var k in new[] { "accel", "brake" })
         if (held[k]) { lines.Insert(at++, (last, $"{last} {k} 0")); held[k] = false; }
     Console.WriteLine("  input types: " + string.Join(",", types) + (seed == null ? "  (seed not found)" : $"  seed {seed}"));
-    return string.Join("\n", lines.Select(l => l.s)) + "\n";
+    // same-millisecond events in TMTAS order: seed, accel, brake, steer, others
+    static int Rank(string l) => l.Contains(" seed ") ? 0 : l.Contains(" accel ") ? 1 : l.Contains(" brake ") ? 2 : l.Contains(" steer ") ? 3 : 4;
+    var ordered = lines.Select((l, i) => (l, i)).OrderBy(x => x.l.t).ThenBy(x => Rank(x.l.s)).ThenBy(x => x.i).Select(x => x.l.s);
+    return string.Join("\n", ordered) + "\n";
 
     void Key(string key, dynamic inp, int ms)
     {

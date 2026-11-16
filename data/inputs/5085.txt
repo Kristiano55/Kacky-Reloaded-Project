@@ -37,11 +37,11 @@
 4680 steer -92
 4730 steer 110
 4850 steer -91
-5030 steer 122
 5030 brake 1
+5030 steer 122
 5040 steer -113
 5050 brake 0
 5090 steer 52
 5100 steer -120
-5220 steer 0
 5220 accel 0
+5220 steer 0

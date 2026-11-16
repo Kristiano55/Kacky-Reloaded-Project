@@ -158,8 +158,8 @@
 5110 steer 109
 5120 steer 67
 5140 steer 125
-5150 steer -50
 5150 accel 0
+5150 steer -50
 5170 steer 77
 5200 steer -85
 5210 steer -94
@@ -437,8 +437,8 @@
 9430 steer -28
 9440 steer 113
 9470 steer 19
-9490 steer 54
 9490 accel 1
+9490 steer 54
 9510 steer 89
 9520 steer 43
 9540 steer -84
@@ -686,8 +686,8 @@
 12900 steer 48
 12910 steer 10
 12930 steer 2
-12940 steer 116
 12940 brake 0
+12940 steer 116
 12950 steer -67
 12960 steer 84
 12970 steer 48
@@ -715,6 +715,6 @@
 13310 steer 126
 13340 steer 123
 13350 steer 125
-13360 steer 0
 13360 accel 0
+13360 steer 0
 34250 respawn
