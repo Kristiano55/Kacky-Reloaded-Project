@@ -160,7 +160,7 @@ function draw(m, live) {
       <tr class="inrow" id="in-${r.id}" hidden><td colspan="5"></td></tr>`).join('')}</table>`
       : `<p class="muted">No TAS on TMTAS Exchange yet. Be the first: <a href="${TMTAS}/upload" target="_blank" rel="noopener">upload a replay</a>.</p>`}
   </div>
-  ${(() => { const v = VIDEOS.filter((x) => x.map === m.id); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
+  ${(() => { const v = VIDEOS.filter((x) => x.map === m.id).sort((a, b) => a.outdated - b.outdated); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
   <div class="m-sec"><div class="links">
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/leaderboard/${esc(m.uid)}">Trackmania.io leaderboard</a>
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/campaigns/3074/${m.campaign}">Campaign</a>
@@ -313,7 +313,7 @@ function vcard(v) {
     : e.kind === 'video' ? `<video src="${esc(e.src)}" controls preload="metadata"></video>`
     : `<iframe src="${esc(e.src)}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   return `<div class="vcard"><div class="vmedia">${media}</div><div class="vmeta">
-    <div><b>${esc(v.title || (m ? `KR${m.ed} #${m.id}` : 'Video'))}</b></div>
+    <div><b>${esc(v.title || (m ? `KR${m.ed} #${m.id}` : 'Video'))}</b>${v.outdated ? ` <span class="tag r-meh" title="A faster TAS has been uploaded since this video">Older run${v.forTas ? ' · ' + v.forTas.toFixed(3) : ''}</span>` : ''}</div>
     <div class="muted">${m ? `<a href="#map-${m.id}" onclick="openMap(${m.id});return false" style="color:${ED_COL[m.ed]}">KR${m.ed} #${m.id}</a>` : 'Compilation'}${v.runner ? ' · ' + P(v.runner) : ''} · <a href="${esc(v.url)}" target="_blank" rel="noopener">source ↗</a></div></div></div>`;
 }
 function renderVideos() {
