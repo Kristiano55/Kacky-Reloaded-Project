@@ -24,7 +24,7 @@
 <nav class="bar">
   <div class="wrap bar-in">
     <div class="eds" id="eds"></div>
-    <div class="parts" id="parts"></div>
+    <div class="parts" id="views"><button class="chip on" data-view="maps">Maps</button><button class="chip" data-view="stats">Stats</button></div>
     <div class="tools">
       <input id="q" type="search" placeholder="Search #, name, author, runner…" autocomplete="off">
       <select id="filter">
@@ -33,6 +33,10 @@
         <option value="none">No TAS yet</option>
         <option value="beat">TAS beats WR</option>
         <option value="behind">TAS slower than WR</option>
+        <option value="Normal cut">Normal cuts</option>
+        <option value="Uber">Ubers</option>
+        <option value="Noseboost">Noseboosts</option>
+        <option value="unrated">Not rated yet</option>
       </select>
       <select id="sort">
         <option value="id">Map #</option>
@@ -48,6 +52,7 @@
   <div class="progress" id="progress"></div>
   <div class="grid" id="grid"></div>
   <p class="empty" id="empty" hidden>No maps match.</p>
+  <section id="statsView" hidden></section>
 </main>
 
 <dialog id="modal">

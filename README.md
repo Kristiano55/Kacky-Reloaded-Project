@@ -20,6 +20,18 @@ index.html + app.js           static site; opening a map also refreshes its TAS 
 
 Upload the replay to **[tmtas.exchange/upload](https://tmtas.exchange/upload)**. The site picks it up on the next refresh, or straight away when someone opens that map.
 
+## Classifying TASes
+
+Each TAS is tagged with a **cut type** (No cut / Normal cut / Uber / Noseboost) and a **rating** (Great / Good / Okay / Meh).
+Tags live in `data/classify.json`, keyed by map UID:
+
+```json
+{ "Fbj1K9BjAE0fN8fFBlLThd7sgQ1": { "cut": "Normal cut", "rating": "Great" } }
+```
+
+They're edited in the tracker sheet's Maps tab, then synced into this file. The site's Stats tab and badges are built from them.
+Score = average of Great 100 · Good 75 · Okay 50 · Meh 25.
+
 ## Run locally
 
 ```bash
