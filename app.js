@@ -173,8 +173,10 @@ const score = (ms) => { const r = ms.filter((m) => SCORE[m.rating]); return r.le
 const secs = (ms) => (ms / 1000).toFixed(3);
 
 function renderStats() {
-  const eds = [1, 2, 3, 4, 5, 6, 7].map((e) => ({ label: 'KR' + e, e, ms: MAPS.filter((m) => m.ed === e) }));
-  eds.push({ label: 'Total', ms: MAPS, total: true });
+  const pool = state.ed ? MAPS.filter((m) => m.ed === state.ed) : MAPS;
+  const scope = state.ed ? 'KR' + state.ed : 'All editions';
+  const eds = (state.ed ? [state.ed] : [1, 2, 3, 4, 5, 6, 7]).map((e) => ({ label: 'KR' + e, e, ms: MAPS.filter((m) => m.ed === e) }));
+  if (!state.ed) eds.push({ label: 'Total', ms: MAPS, total: true });
   const row = ({ label, e, ms, total }) => {
     const d = ms.filter((m) => m.best), p = ms.length ? d.length / ms.length : 0;
     const saved = d.reduce((s, m) => s + (m.gap ?? 0), 0);
@@ -191,20 +193,21 @@ function renderStats() {
       <td class="mono muted">${d.filter((m) => !m.rating).length}</td><td class="mono"><b>${score(d)}</b></td></tr>`;
   };
   const by = {};
-  MAPS.filter((m) => m.best).forEach((m) => (by[m.best.by] ||= []).push(m));
+  pool.filter((m) => m.best).forEach((m) => (by[m.best.by] ||= []).push(m));
   const runners = Object.entries(by).map(([n, ms]) => ({ n, ms, saved: ms.reduce((s, m) => s + (m.gap ?? 0), 0) }))
     .sort((a, b) => b.ms.length - a.ms.length || a.saved - b.saved);
-  const biggest = MAPS.filter((m) => m.gap < 0).sort((a, b) => a.gap - b.gap).slice(0, 10);
+  const biggest = pool.filter((m) => m.gap < 0).sort((a, b) => a.gap - b.gap).slice(0, 10);
   $('#statsView').innerHTML = `
-  <div class="panel"><h3>Editions</h3><div class="tw"><table><tr><th>Edition</th><th>TAS'd</th><th style="width:22%">Progress</th><th>%</th><th>TAS total</th><th>WR total</th><th>Saved</th><th>Normal cuts</th><th>Ubers</th><th>Noseboosts</th></tr>
+  <div class="scope" style="--c:${ED_COL[state.ed] || 'var(--acc)'}">${scope}</div>
+  <div class="panel"><h3>${state.ed ? 'Edition' : 'Editions'}</h3><div class="tw"><table><tr><th>Edition</th><th>TAS'd</th><th style="width:22%">Progress</th><th>%</th><th>TAS total</th><th>WR total</th><th>Saved</th><th>Normal cuts</th><th>Ubers</th><th>Noseboosts</th></tr>
   ${eds.map(row).join('')}</table></div></div>
   <div class="two">
     <div class="panel"><h3>Ratings</h3><div class="tw"><table><tr><th>Edition</th><th>Great</th><th>Good</th><th>Okay</th><th>Meh</th><th>Unrated</th><th>Score</th></tr>
     ${eds.map(rrow).join('')}</table></div><p class="note">Score: Great 100 · Good 75 · Okay 50 · Meh 25, averaged over rated TASes.</p></div>
     <div class="panel"><h3>Biggest timesaves</h3><div class="tw"><table><tr><th>Map</th><th>WR</th><th>TAS</th><th>Saved</th></tr>
-    ${biggest.map((m) => `<tr class="click" onclick="openMap(${m.id})"><td><b style="color:${ED_COL[m.ed]}">KR${m.ed}</b> #${m.id}</td><td class="mono">${fmt(m.wr.t)}</td><td class="mono" style="color:var(--acc2)">${fmt(m.best.t)}</td><td class="mono neg">${fmtGap(m.gap)}</td></tr>`).join('')}</table></div></div>
+    ${biggest.length ? '' : '<tr><td colspan="4" class="muted">No TAS faster than the WR yet.</td></tr>'}${biggest.map((m) => `<tr class="click" onclick="openMap(${m.id})"><td><b style="color:${ED_COL[m.ed]}">KR${m.ed}</b> #${m.id}</td><td class="mono">${fmt(m.wr.t)}</td><td class="mono" style="color:var(--acc2)">${fmt(m.best.t)}</td><td class="mono neg">${fmtGap(m.gap)}</td></tr>`).join('')}</table></div></div>
   </div>
-  <div class="panel"><h3>Runners · ${runners.length}</h3><div class="tw"><table><tr><th>#</th><th>Runner</th><th>TASes</th><th>Saved</th><th>Normal cuts</th><th>Ubers</th><th>Noseboosts</th><th>Avg score</th></tr>
+  <div class="panel"><h3>Runners · ${runners.length}</h3>${runners.length ? '' : '<p class="muted">No TAS runs in this edition yet.</p>'}<div class="tw"><table><tr><th>#</th><th>Runner</th><th>TASes</th><th>Saved</th><th>Normal cuts</th><th>Ubers</th><th>Noseboosts</th><th>Avg score</th></tr>
   ${runners.map((r, i) => `<tr><td class="mono muted">${i + 1}</td><td><b>${esc(r.n)}</b></td><td class="mono">${r.ms.length}</td><td class="mono neg">${fmtGap(r.saved)}</td>
     ${['Normal cut', 'Uber', 'Noseboost'].map((k) => `<td class="mono">${r.ms.filter((m) => m.cut === k).length}</td>`).join('')}<td class="mono">${score(r.ms)}</td></tr>`).join('')}</table></div></div>`;
 }

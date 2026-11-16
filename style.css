@@ -129,3 +129,4 @@ td.mono{font-family:var(--mono)}
 tr.tot td{border-top:1px solid var(--line2);font-weight:700}
 tr.click{cursor:pointer} tr.click:hover td{background:#151927}
 @media (max-width:900px){.two{grid-template-columns:1fr}}
+.scope{font:700 28px var(--disp);font-style:italic;letter-spacing:.02em;color:var(--c)}
