@@ -12,7 +12,7 @@ A live TAS tracker for **Kacky Reloaded** (Trackmania 2020): all 525 maps from K
 scripts/update.mjs  ──► data/maps.json    525 maps (UID, author, author time, campaign)
                     ──► data/wr.json      WR time / holder / date per map UID
                     ──► data/tas.json     TAS runs per map UID
-.github/workflows/update.yml  runs it every 30 min, commits data, deploys GitHub Pages
+.github/workflows/update.yml  runs every 30 min (each run starts the next; cron as backup), commits data, deploys Pages
 index.html + app.js           static site; opening a map also refreshes its TAS runs live
 ```
 

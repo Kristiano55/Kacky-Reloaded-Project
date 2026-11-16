@@ -13,6 +13,7 @@ on:
     branches: [main]
 
 permissions:
+  actions: write
   contents: write
   pages: write
   id-token: write
@@ -27,7 +28,11 @@ jobs:
     if: github.event_name != 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    outputs:
+      started: ${{ steps.t.outputs.started }}
     steps:
+      - id: t
+        run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -69,3 +74,23 @@ jobs:
           path: .
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  # Keeps the 30-minute cycle going even when GitHub skips the cron schedule:
+  # waits until 30 min after this run started, then starts the next run.
+  # (Disable the workflow in the Actions tab to stop the cycle.)
+  next:
+    needs: [data, deploy]
+    if: always() && github.event_name != 'push' && needs.data.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Wait for the 30-minute mark
+        run: |
+          elapsed=$(( $(date +%s) - ${{ needs.data.outputs.started }} ))
+          wait=$(( 1800 - elapsed ))
+          echo "elapsed ${elapsed}s, waiting ${wait}s"
+          [ $wait -gt 0 ] && sleep $wait || true
+      - name: Start next refresh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run update.yml --repo ${{ github.repository }} --ref main -f fetch=true
