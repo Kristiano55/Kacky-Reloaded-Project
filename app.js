@@ -56,7 +56,7 @@ function buildChips() {
   $('#eds').innerHTML = ['All', 1, 2, 3, 4, 5, 6, 7].map((e, i) =>
     `<button class="chip" data-ed="${i}" style="--c:${ED_COL[i] || 'var(--acc)'}">${i ? 'KR' + e : e}</button>`).join('');
   $('#eds').onclick = (e) => { const b = e.target.closest('[data-ed]'); if (b) { state.ed = +b.dataset.ed; sync(); } };
-  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; render(); } };
+  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; history.replaceState(null, '', state.view === 'stats' ? '#stats' : `#kr${state.ed || 'all'}`); render(); window.scrollTo({ top: $('main').offsetTop - 70, behavior: 'smooth' }); } };
   $('#q').oninput = (e) => { state.q = e.target.value.toLowerCase(); render(); };
   $('#filter').onchange = (e) => { state.filter = e.target.value; render(); };
   $('#sort').onchange = (e) => { state.sort = e.target.value; render(); };
