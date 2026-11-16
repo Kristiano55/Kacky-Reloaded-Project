@@ -82,7 +82,7 @@ jobs:
   # (Disable the workflow in the Actions tab to stop the cycle.)
   next:
     needs: [data, deploy]
-    if: always() && github.event_name != 'push' && needs.data.result == 'success'
+    if: always() && (github.event_name == 'schedule' || inputs.fetch) && needs.data.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
@@ -95,4 +95,9 @@ jobs:
       - name: Start next refresh
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run update.yml --repo ${{ github.repository }} --ref main -f fetch=true
+        run: |
+          # only one refresh loop: skip if another run is already queued or running
+          others=$(gh run list --repo ${{ github.repository }} --workflow update.yml --json databaseId,status,event \
+            --jq '[.[] | select(.databaseId != ${{ github.run_id }} and .event != "push" and (.status == "queued" or .status == "in_progress" or .status == "pending" or .status == "waiting"))] | length')
+          if [ "$others" -gt 0 ]; then echo "another refresh is already scheduled/running, not starting a new one"; exit 0; fi
+          gh workflow run update.yml --repo ${{ github.repository }} --ref main -f fetch=true
