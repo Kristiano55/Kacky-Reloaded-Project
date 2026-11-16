@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '17 */6 * * *'   # every 6 hours
   workflow_dispatch:
+    inputs:
+      fetch:
+        description: 'Refresh WRs and TAS runs (slow, ~15 min). Untick to only extract inputs.'
+        type: boolean
+        default: true
   push:
     branches: [main]
 
@@ -28,7 +33,13 @@ jobs:
         with:
           node-version: 20
       - name: Fetch WRs (Trackmania.io) and TAS runs (TMTAS Exchange)
+        if: github.event_name == 'schedule' || inputs.fetch
         run: node scripts/update.mjs
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Extract TAS inputs from replays (GBX.NET)
+        run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
       - name: Commit data
         run: |
           git config user.name "kacky-bot"
