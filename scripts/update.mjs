@@ -50,23 +50,67 @@ if (!maps.length || !('thumb' in maps[0]) || process.argv.includes('--maps')) {
   await writeFile('data/maps.json', JSON.stringify(maps, null, 1));
 }
 
-// 2. TAS runs from TMTAS Exchange (fast: all maps every run)
-const tas = {};
-for (let i = 0; i < maps.length; i += 8) {
-  await Promise.all(maps.slice(i, i + 8).map(async (m) => {
-    const j = await fetch('https://tmtas.exchange/api/tick/leaderboard?map_uid=' + m.uid, { headers: { 'User-Agent': UA } })
-      .then((r) => r.json()).catch(() => null);
-    if (!j?.records?.length) return;
-    const cats = Object.fromEntries((j.categories || []).map((c) => [c.id, c.name]));
-    tas[m.uid] = j.records.map((r) => ({
-      by: r.name, t: r.time_ms, replay: r.replay_url,
-      id: Number(new URL(r.replay_url).searchParams.get('id')), cat: cats[r.category_id] || '',
-    }));
+// 2. TAS runs from TMTAS Exchange — incremental to keep requests minimal:
+//    1 request lists uploads since the last check; only maps with new uploads are re-fetched.
+//    A full 525-map sweep runs once a day as a safety net (deleted/edited runs).
+const TMTAS = 'https://tmtas.exchange/api';
+const tget = (path) => fetch(TMTAS + path, { headers: { 'User-Agent': UA } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+const tstate = await readJson('data/tmtas_state.json', { lastCheck: 0, lastFull: 0, tracks: {} });
+const tas = await readJson('data/tas.json', {});
+const byId = Object.fromEntries(maps.map((m) => [m.id, m]));
+let requests = 0;
+
+async function fetchMapTas(m) {
+  requests++;
+  const j = await tget('/tick/leaderboard?map_uid=' + m.uid);
+  if (!j) return false;
+  const cats = Object.fromEntries((j.categories || []).map((c) => [c.id, c.name]));
+  const runs = (j.records || []).map((r) => ({
+    by: r.name, t: r.time_ms, replay: r.replay_url,
+    id: Number(new URL(r.replay_url).searchParams.get('id')), cat: cats[r.category_id] || '',
   }));
-  await sleep(150);
+  if (runs.length) tas[m.uid] = runs; else delete tas[m.uid];
+  return true;
 }
+
+// TMTAS track id -> map # ("Kacky Reloaded #123"), refreshed only when an unknown track shows up
+async function refreshTracks() {
+  for (let from = 1; from < 2000; from += 50) {
+    requests++;
+    const j = await tget(`/tracks?exchange=tm2020&name=${encodeURIComponent('Kacky Reloaded')}&amount=50&fromResultIndex=${from}`);
+    const res = j?.results || [];
+    for (const t of res) {
+      const n = Number(String(t.track_name || '').match(/Kacky Reloaded #(\d+)\s*$/i)?.[1]);
+      if (byId[n]) tstate.tracks[t.track_id] = n;
+    }
+    if (res.length < 50 || from + 50 > (j?.total || 0)) break;
+  }
+}
+
+const now = Math.floor(Date.now() / 1000);
+const full = process.argv.includes('--full-tas') || now - tstate.lastFull > 86400 || !tstate.lastCheck;
+if (full) {
+  for (let i = 0; i < maps.length; i += 8) { await Promise.all(maps.slice(i, i + 8).map(fetchMapTas)); await sleep(150); }
+  tstate.lastFull = now;
+  console.log('TAS: full sweep');
+} else {
+  requests++;
+  const recent = (await tget(`/replays?minDate=${tstate.lastCheck - 900}`)) || [];
+  const known = new Set(Object.values(tas).flat().map((r) => r.id));
+  const fresh = recent.filter((r) => !known.has(r.id));
+  if (fresh.some((r) => !(r.track_id in tstate.tracks))) {
+    await refreshTracks();
+    // anything still unknown is not a Kacky Reloaded map: remember that too
+    for (const r of fresh) if (!(r.track_id in tstate.tracks)) tstate.tracks[r.track_id] = 0;
+  }
+  const ids = [...new Set(fresh.map((r) => tstate.tracks[r.track_id]).filter(Boolean))];
+  for (const id of ids) await fetchMapTas(byId[id]);
+  console.log(`TAS: ${fresh.length} new uploads, ${ids.length} Kacky maps re-checked`);
+}
+tstate.lastCheck = now;
 await writeFile('data/tas.json', JSON.stringify(tas));
-console.log(`TAS: ${Object.keys(tas).length} maps with runs`);
+await writeFile('data/tmtas_state.json', JSON.stringify(tstate));
+console.log(`TAS: ${Object.keys(tas).length} maps with runs, ${requests} TMTAS requests this run`);
 
 // 3. Human WRs from Trackmania.io — rate limited, so each run gets a time budget
 //    and refreshes the maps that were checked longest ago first.
