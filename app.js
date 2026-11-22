@@ -14,13 +14,16 @@ const state = { ed: 0, q: '', filter: 'all', sort: 'id', view: 'maps' };
 const SCORE = { Great: 100, Good: 75, Okay: 50, Meh: 25 };
 let MAPS = [];
 let VIDEOS = [];
+let DATES = {};
+let LATEST_SEL = null;
 
 const load = (f, d) => fetch(f, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : d)).catch(() => d);
 
 async function init() {
-  const [maps, wr, tas, upd, cls, vids] = await Promise.all([
-    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}), load('data/classify.json', {}), load('data/videos.json', []),
+  const [maps, wr, tas, upd, cls, vids, dates] = await Promise.all([
+    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}), load('data/classify.json', {}), load('data/videos.json', []), load('data/tas_dates.json', {}),
   ]);
+  DATES = dates;
   VIDEOS = vids;
   MAPS = maps.map((m) => {
     const runs = (tas[m.uid] || []).slice().sort((a, b) => a.t - b.t);
@@ -82,8 +85,11 @@ function render() {
   const stats = state.view === 'stats', vids = state.view === 'videos';
   $('#statsView').hidden = !stats; $('#videosView').hidden = !vids; $('#grid').hidden = stats || vids;
   $('.tools').style.visibility = stats || vids ? 'hidden' : '';
+  if (stats || vids) $('#latest').hidden = true;
   if (stats) { $('#empty').hidden = true; renderStats(); return; }
   if (vids) { $('#empty').hidden = true; renderVideos(); return; }
+  $('#latest').hidden = false;
+  renderLatest();
   let list = MAPS.filter((m) => !state.ed || m.ed === state.ed);
   if (state.q) list = list.filter((m) => [m.id, m.name, m.author, m.wr?.by, ...m.runs.map((r) => r.by)].join(' ').toLowerCase().includes(state.q));
   const f = state.filter;
@@ -303,6 +309,11 @@ function embed(url) {
     const clip = u.pathname.match(/\/clip\/([\w-]+)/)?.[1]; if (clip) return { kind: 'iframe', src: `https://clips.twitch.tv/embed?clip=${clip}&parent=${parent}&autoplay=false` };
     const vid = u.pathname.match(/\/videos\/(\d+)/)?.[1]; if (vid) return { kind: 'iframe', src: `https://player.twitch.tv/?video=${vid}&parent=${parent}&autoplay=false${t ? '&time=' + t : ''}` };
   }
+  if (h === 'medal.tv') {
+    const id = u.pathname.match(/\/clips?\/([\w-]+)/)?.[1];
+    const game = u.pathname.match(/\/games\/([\w-]+)/)?.[1] || 'trackmania';
+    if (id) return { kind: 'iframe', src: `https://medal.tv/games/${game}/clip/${id}?autoplay=0&muted=0&loop=0` };
+  }
   if (h === 'streamable.com') return { kind: 'iframe', src: `https://streamable.com/e/${u.pathname.split('/').pop()}` };
   if (/\.(mp4|webm|mov)(\?|$)/i.test(u.pathname)) return { kind: 'video', src: url };
   return null;
@@ -322,5 +333,59 @@ function renderVideos() {
     ? `<div class="scope" style="--c:${ED_COL[state.ed] || 'var(--acc)'}">${state.ed ? 'KR' + state.ed + ' videos' : 'Videos'} · ${list.length}</div><div class="vgrid">${list.map(vcard).join('')}</div>`
     : `<div class="panel"><h3>Videos</h3><p class="muted">No videos ${state.ed ? 'for KR' + state.ed + ' ' : ''}yet. Add a YouTube, Twitch, Streamable or .mp4 link in the tracker sheet's <b>Videos</b> tab and it shows up here.</p></div>`;
 }
+
+// ---- latest TASes (main page) ----
+const ago = (unix) => {
+  if (!unix) return '';
+  const s = Date.now() / 1000 - unix;
+  if (s < 3600) return Math.max(1, Math.round(s / 60)) + ' min ago';
+  if (s < 86400) return Math.round(s / 3600) + ' h ago';
+  if (s < 86400 * 30) return Math.round(s / 86400) + ' d ago';
+  return new Date(unix * 1000).toLocaleDateString();
+};
+function clipFor(m, r) {
+  const v = VIDEOS.filter((x) => x.map === m.id);
+  return v.find((x) => x.forTas != null && Math.abs(x.forTas - r.t / 1000) < 0.0005)
+    || (m.best && m.best.id === r.id ? v.find((x) => !x.outdated && x.forTas == null) : null);
+}
+function latestRuns() {
+  return MAPS.filter((m) => !state.ed || m.ed === state.ed)
+    .flatMap((m) => m.runs.map((r, i) => ({ m, r, rank: i + 1 })))
+    .sort((a, b) => (DATES[b.r.id] || 0) - (DATES[a.r.id] || 0) || b.r.id - a.r.id)
+    .slice(0, 5)
+    .map((x) => ({ ...x, clip: clipFor(x.m, x.r), date: DATES[x.r.id] }));
+}
+function renderLatest() {
+  const L = latestRuns();
+  if (!L.length) { $('#latest').innerHTML = ''; return; }
+  if (!L.some((x) => x.r.id === LATEST_SEL)) LATEST_SEL = (L.find((x) => x.clip) || L[0]).r.id;
+  const sel = L.find((x) => x.r.id === LATEST_SEL);
+  const g = (x) => (x.m.wr ? x.r.t - x.m.wr.t : null);
+  const e = sel.clip ? embed(sel.clip.url) : null;
+  const player = sel.clip
+    ? (e ? (e.kind === 'video' ? `<video src="${esc(e.src)}" controls preload="metadata"></video>`
+        : `<iframe src="${esc(e.src)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`)
+      : `<a class="vlink" href="${esc(sel.clip.url)}" target="_blank" rel="noopener">▶ Watch clip</a>`)
+    : `<div class="noclip"><div class="big">${fmt(sel.r.t)}</div><div class="muted">No clip for this run yet. Add one in the sheet's Videos tab.</div>
+        <div class="links" style="justify-content:center;margin-top:10px"><button class="btn pri" onclick="openMap(${sel.m.id})">Open map · Inputs</button><a class="btn" href="${esc(sel.r.replay)}">⬇ Replay</a></div></div>`;
+  $('#latest').innerHTML = `
+    <div class="lt-head"><h3>Latest TASes</h3><span class="muted">${state.ed ? 'KR' + state.ed : 'All editions'}</span></div>
+    <div class="lt">
+      <div class="lt-list">${L.map((x) => { const d = g(x); return `
+        <button class="lt-item ${x.r.id === LATEST_SEL ? 'on' : ''}" style="--c:${ED_COL[x.m.ed]}" onclick="selectLatest(${x.r.id})">
+          <span class="lt-map"><b>KR${x.m.ed}</b> #${x.m.id}</span>
+          <span class="lt-who">${esc(x.r.by)}${x.rank === 1 ? ' <span class="tag r-great">#1</span>' : ''}</span>
+          <span class="lt-time mono">${fmt(x.r.t)}</span>
+          <span class="lt-gap mono ${d < 0 ? 'neg' : 'pos'}">${d == null ? '' : fmtGap(d)}</span>
+          <span class="lt-meta">${x.clip ? '<span class="lt-clip">▶ clip</span>' : ''}<span class="muted">${ago(x.date)}</span></span>
+        </button>`; }).join('')}</div>
+      <div class="lt-player">
+        <div class="vmedia">${player}</div>
+        <div class="vmeta"><div><b style="color:${ED_COL[sel.m.ed]}">KR${sel.m.ed} #${sel.m.id}</b> · ${P(sel.r.by)} · <span class="mono">${fmt(sel.r.t)}</span>${sel.clip?.title ? ' · ' + esc(sel.clip.title) : ''}</div>
+          <div class="muted"><a href="#map-${sel.m.id}" onclick="openMap(${sel.m.id});return false">Open map</a>${sel.clip ? ` · <a href="${esc(sel.clip.url)}" target="_blank" rel="noopener">source ↗</a>` : ''}</div></div>
+      </div>
+    </div>`;
+}
+window.selectLatest = (id) => { LATEST_SEL = id; renderLatest(); };
 
 init();

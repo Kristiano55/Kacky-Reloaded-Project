@@ -160,3 +160,24 @@ tr.click{cursor:pointer} tr.click:hover td{background:#151927}
 /* discord */
 .discord{display:inline-flex;align-items:center;gap:9px;margin-top:18px;padding:10px 18px;border-radius:11px;background:#5865f2;color:#fff;font:600 15px var(--disp);letter-spacing:.04em;box-shadow:0 8px 28px -10px #5865f2;transition:transform .15s,box-shadow .15s}
 .discord:hover{text-decoration:none;transform:translateY(-1px);box-shadow:0 12px 34px -10px #5865f2}
+
+/* latest TASes */
+.latest{margin:28px 0 6px}
+.lt-head{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}
+.lt-head h3{margin:0;font:700 22px var(--disp);font-style:italic;letter-spacing:.02em;color:var(--tx);text-transform:none}
+.lt{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:14px;align-items:start}
+.lt-list{display:grid;gap:8px}
+.lt-item{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:1fr auto;grid-template-areas:"map time" "who gap" "meta meta";gap:2px 10px;padding:11px 14px 11px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;position:relative;transition:.15s}
+.lt-item:before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--c)}
+.lt-item:hover{border-color:var(--line2);transform:translateX(2px)}
+.lt-item.on{border-color:var(--c);box-shadow:0 0 0 1px var(--c),0 10px 30px -16px var(--c);background:#141826}
+.lt-map{grid-area:map;font:600 15px var(--disp)} .lt-map b{color:var(--c)}
+.lt-who{grid-area:who;font-size:13px;color:var(--mut)}
+.lt-time{grid-area:time;font-size:15px;color:var(--acc2);text-align:right}
+.lt-gap{grid-area:gap;font-size:12px;text-align:right}
+.lt-meta{grid-area:meta;display:flex;gap:8px;font-size:11px;margin-top:2px}
+.lt-clip{color:#ff77c8;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.lt-player{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.noclip{text-align:center;padding:20px}
+.noclip .big{font:600 34px var(--mono);color:var(--acc2)}
+@media (max-width:900px){.lt{grid-template-columns:1fr}}

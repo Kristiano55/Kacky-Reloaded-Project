@@ -58,6 +58,7 @@ const tget = (path) => fetch(TMTAS + path, { headers: { 'User-Agent': UA } }).th
 const tstate = await readJson('data/tmtas_state.json', { lastCheck: 0, lastFull: 0, tracks: {} });
 const tas = await readJson('data/tas.json', {});
 const byId = Object.fromEntries(maps.map((m) => [m.id, m]));
+const dates = await readJson('data/tas_dates.json', {}); // replay id -> upload time (unix s), for "latest TASes"
 let requests = 0;
 
 async function fetchMapTas(m) {
@@ -96,6 +97,7 @@ if (full) {
 } else {
   requests++;
   const recent = (await tget(`/replays?minDate=${tstate.lastCheck - 900}`)) || [];
+  for (const r of recent) dates[r.id] = r.date;
   const known = new Set(Object.values(tas).flat().map((r) => r.id));
   const fresh = recent.filter((r) => !known.has(r.id));
   if (fresh.some((r) => !(r.track_id in tstate.tracks))) {
@@ -107,6 +109,16 @@ if (full) {
   for (const id of ids) await fetchMapTas(byId[id]);
   console.log(`TAS: ${fresh.length} new uploads, ${ids.length} Kacky maps re-checked`);
 }
+// Upload dates for runs we don't have one for yet (1 request, at most once every 6 h)
+const undated = Object.values(tas).flat().filter((r) => !dates[r.id]);
+if (undated.length && now - (tstate.datesTried || 0) > 6 * 3600) {
+  requests++;
+  const minId = Math.min(...undated.map((r) => r.id));
+  const list = (await tget(`/replays?minDate=${now - 180 * 86400}`)) || [];
+  for (const r of list) if (r.id >= minId) dates[r.id] = r.date;
+  tstate.datesTried = now;
+}
+await writeFile('data/tas_dates.json', JSON.stringify(dates));
 tstate.lastCheck = now;
 await writeFile('data/tas.json', JSON.stringify(tas));
 await writeFile('data/tmtas_state.json', JSON.stringify(tstate));
