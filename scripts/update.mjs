@@ -33,7 +33,7 @@ await mkdir('data', { recursive: true });
 
 // 1. Maps (only re-fetched if missing or with --maps)
 let maps = await readJson('data/maps.json', []);
-if (!maps.length || !('thumb' in maps[0]) || process.argv.includes('--maps')) {
+if (!maps.length || !('file' in maps[0]) || process.argv.includes('--maps')) {
   maps = [];
   for (const ed in CAMPAIGNS) {
     for (let p = 0; p < 3; p++) {
@@ -43,6 +43,7 @@ if (!maps.length || !('thumb' in maps[0]) || process.argv.includes('--maps')) {
         id: (ed - 1) * 75 + p * 25 + i + 1, ed: +ed, part: p + 1, uid: m.mapUid,
         name: strip(m.name), author: m.authorplayer?.name || '', at: m.authorScore,
         lb: c.leaderboarduid, campaign: id, thumb: m.thumbnailUrl || '',
+        file: m.fileUrl || '', tmx: m.exchangeid || 0,
       }));
       await sleep(1500);
     }

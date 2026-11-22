@@ -168,6 +168,9 @@ function draw(m, live) {
   </div>
   ${(() => { const v = VIDEOS.filter((x) => x.map === m.id).sort((a, b) => a.outdated - b.outdated); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
   <div class="m-sec"><div class="links">
+    ${m.tmx ? `<a class="btn pri" href="https://trackmania.exchange/mapgbx/${m.tmx}" title="Download the .Map.Gbx from Trackmania Exchange">⬇ Download map</a>
+      <a class="btn" target="_blank" rel="noopener" href="https://trackmania.exchange/mapshow/${m.tmx}">TMX page</a>`
+      : m.file ? `<a class="btn pri" href="${esc(m.file)}" download="Kacky Reloaded #${m.id}.Map.Gbx" title="Download the map file from Nadeo's servers">⬇ Download map</a>` : ''}
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/leaderboard/${esc(m.uid)}">Trackmania.io leaderboard</a>
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/campaigns/3074/${m.campaign}">Campaign</a>
     <a class="btn" target="_blank" rel="noopener" href="${TMTAS}/upload">Upload TAS</a>
