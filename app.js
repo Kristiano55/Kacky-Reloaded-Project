@@ -76,7 +76,7 @@ function readHash() {
   const mm = location.hash.match(/map-(\d+)/);
   if (mm) setTimeout(() => open(+mm[1]), 0);
   const pm = location.hash.match(/player-(.+)/);
-  if (pm) setTimeout(() => openPlayer(decodeURIComponent(pm[1])), 0);
+  if (pm) setTimeout(() => openPlayer(safeDecode(pm[1])), 0);
 }
 
 function render() {
@@ -185,7 +185,15 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') e.ta
 const SITE = location.origin + location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
 const slug = (n) => String(n).replace(/[^A-Za-z0-9._-]/g, (c) => '_' + c.codePointAt(0).toString(16));
 window.copyShare = (url, btn) => { navigator.clipboard.writeText(url); const t = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(() => (btn.textContent = t), 1500); };
-const P = (n) => n ? `<a class="plink" href="#player-${encodeURIComponent(n)}" onclick="event.stopPropagation();openPlayer(decodeURIComponent('${encodeURIComponent(n)}'));return false">${esc(n)}</a>` : '';
+// Player links carry the name as data, never inside inline JS (names come from outside sources)
+const P = (n) => n ? `<a class="plink" href="#player-${encodeURIComponent(n)}" data-player="${esc(n)}">${esc(n)}</a>` : '';
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('[data-player]');
+  if (!a) return;
+  e.preventDefault(); e.stopPropagation();
+  openPlayer(a.dataset.player);
+}, true);
+const safeDecode = (s) => { try { return decodeURIComponent(s); } catch { return s; } };
 
 function tags(m) {
   const t = [];

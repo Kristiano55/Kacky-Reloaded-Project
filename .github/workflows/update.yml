@@ -23,9 +23,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The 30-minute loop starts each run itself; the cron is only a fallback.
+  # A scheduled run stands down if a refresh already ran in the last 25 minutes,
+  # so the two never refresh at the same time.
+  gate:
+    if: github.event_name != 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.g.outputs.go }}
+    steps:
+      - id: g
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then echo "go=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          since=$(date -u -d '25 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          recent=$(gh run list --repo ${{ github.repository }} --workflow update.yml --limit 20 --json databaseId,event,createdAt \
+            --jq "[.[] | select(.databaseId != ${{ github.run_id }} and .event != \"push\" and .createdAt > \"$since\")] | length")
+          if [ "$recent" -gt 0 ]; then echo "go=false" >> "$GITHUB_OUTPUT"; echo "a refresh ran recently, standing down"; else echo "go=true" >> "$GITHUB_OUTPUT"; fi
+
   data:
     # Slow (Trackmania.io rate limits): only on schedule / manual runs
-    if: github.event_name != 'push'
+    needs: gate
+    if: needs.gate.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 50
     outputs:
@@ -84,7 +104,7 @@ jobs:
   deploy:
     needs: data
     # runs right away on push; after the data job on schedule / manual runs
-    if: always() && (needs.data.result == 'skipped' || (needs.data.result == 'success' && needs.data.outputs.changed == 'true'))
+    if: always() && (github.event_name == 'push' || (needs.data.result == 'success' && needs.data.outputs.changed == 'true'))
     runs-on: ubuntu-latest
     concurrency:
       group: pages-deploy

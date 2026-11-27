@@ -181,3 +181,18 @@ tr.click{cursor:pointer} tr.click:hover td{background:#151927}
 .noclip{text-align:center;padding:20px}
 .noclip .big{font:600 34px var(--mono);color:var(--acc2)}
 @media (max-width:900px){.lt{grid-template-columns:1fr}}
+
+/* phones */
+@media (max-width:560px){
+  h1{font-size:clamp(28px,10.5vw,60px)}
+  h1 em{-webkit-text-stroke-width:1.5px}
+  .hero{padding:36px 0 24px}
+  .stat{min-width:0;flex:1 1 calc(50% - 6px)}
+  .bar{position:static}
+  .eds,.parts{flex-wrap:wrap;max-width:100%}
+  .tools{gap:6px}
+  #q{flex:1 1 100%}
+  #filter,#sort{flex:1 1 calc(50% - 3px);min-width:0}
+  .lt-head h3{font-size:19px}
+  .m-head h2{font-size:34px}
+}
