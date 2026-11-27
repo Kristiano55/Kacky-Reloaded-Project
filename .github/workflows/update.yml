@@ -52,6 +52,8 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Extract TAS inputs from replays (GBX.NET)
         run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
+      - name: Read tags and videos from the Google Sheet
+        run: node scripts/gsheet_sync.mjs
       - name: Save run state
         if: always()
         uses: actions/cache/save@v4

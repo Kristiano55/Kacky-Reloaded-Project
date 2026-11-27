@@ -63,3 +63,24 @@ for (const [name, list] of Object.entries(players)) {
   }));
 }
 console.log(`share pages: ${maps.length} maps, ${Object.keys(players).length} players`);
+
+// ---- CSV feeds for the Google Sheet (IMPORTDATA), one row per map in map order ----
+const classify = await rd('data/classify.json', {});
+const videos = await rd('data/videos.json', []);
+const q = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
+const core = [['#', 'Edition', 'Author', 'WR (s)', 'WR holder', 'Best TAS (s)', 'TAS by', 'Gap vs WR (s)']];
+const extra = [['Status', 'Author time (s)', 'WR date', 'Map UID', 'Replay', 'Video outdated', 'Tags outdated', 'TAS runs']];
+for (const m of maps) {
+  const w = wr[m.uid]?.t ? wr[m.uid] : null;
+  const runs = (tas[m.uid] || []).slice().sort((a, b) => a.t - b.t);
+  const best = runs[0];
+  const gap = best && w ? (best.t - w.t) / 1000 : null;
+  core.push([m.id, 'KR' + m.ed, m.author, w ? w.t / 1000 : '', w?.by || '', best ? best.t / 1000 : '', best?.by || '', gap ?? '']);
+  extra.push([
+    !best ? 'No TAS' : gap != null && gap < 0 ? 'TAS < WR' : 'TAS > WR', m.at / 1000, w?.date || '', m.uid, best?.replay || '',
+    videos.some((v) => v.map === m.id && v.outdated) ? 'TRUE' : 'FALSE', classify[m.uid]?.outdated ? 'TRUE' : 'FALSE', runs.length,
+  ]);
+}
+await writeFile('data/sheet_core.csv', core.map((r) => r.map(q).join(',')).join('\n') + '\n');
+await writeFile('data/sheet_extra.csv', extra.map((r) => r.map(q).join(',')).join('\n') + '\n');
+console.log('sheet feeds: data/sheet_core.csv, data/sheet_extra.csv');

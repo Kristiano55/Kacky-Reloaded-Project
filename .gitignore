@@ -6,3 +6,5 @@ sync/sheet.json
 .state/
 m/
 p/
+data/sheet_core.csv
+data/sheet_extra.csv
