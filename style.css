@@ -222,3 +222,6 @@ tr.click{cursor:pointer} tr.click:hover td{background:#151927}
   .inputs pre{max-height:220px;font-size:11px}
   .edbar{grid-template-columns:40px 1fr 26px}
 }
+
+/* edition progress cards are buttons */
+button.pg{font:inherit;color:inherit;text-align:left;width:100%}

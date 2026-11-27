@@ -9,12 +9,52 @@ A live TAS tracker for **Kacky Reloaded** (Trackmania 2020): all 525 maps from K
 ## How it works
 
 ```
-scripts/update.mjs  ──► data/maps.json    525 maps (UID, author, author time, campaign)
-                    ──► data/wr.json      WR time / holder / date per map UID
-                    ──► data/tas.json     TAS runs per map UID
-.github/workflows/update.yml  runs every 30 min (each run starts the next; cron as backup); commits and deploys only when records change
-index.html + app.js           static site; opening a map also refreshes its TAS runs live
+Trackmania.io ──┐                               ┌──► data/*.json ──► website (GitHub Pages)
+TMTAS Exchange ─┼─► scripts/update.mjs ─────────┤
+Google Sheet ───┘   scripts/gsheet_sync.mjs     └──► data/inputs/*.txt   (tools/extract, GBX.NET)
+                         ▲                                   │
+       .github/workflows/update.yml, every 30 min            └──► deploy: scripts/build_pages.mjs (share pages, sheet feeds)
 ```
+
+The data job commits only when a record actually changes; deploys run the checks and tests first.
+
+## Project structure
+
+| Path | What it is |
+|---|---|
+| `index.html`, `style.css` | The page shell and all styling |
+| `js/main.js` | Entry point: loads data, wires controls, one click handler for the whole page (`data-action`, `data-player`) |
+| `js/format.js` | Pure helpers (`fmt`, `fmtGap`, `esc`, `slug`, …), shared with the Node scripts |
+| `js/embed.js` | Video link → embeddable player (YouTube, Twitch, Medal, Streamable, files) |
+| `js/model.js` | Data model: build, filter and summarise maps (pure, unit-tested) |
+| `js/store.js` | Shared browser state and constants |
+| `js/router.js` | URL ⇄ state (`?ed=&view=&f=&sort=&q=`), map/profile pages as history steps (`#map-N`, `#player-X`) |
+| `js/html.js` | Shared HTML pieces: player links, tags, video cards, copy buttons |
+| `js/views/*.js` | One file per part of the page: overview, grid, latest, mapPage, playerPage, stats, videos |
+| `scripts/update.mjs` | Fetches WRs (Trackmania.io, rate-limited, oldest first) and TAS runs (TMTAS, incremental) |
+| `scripts/gsheet_sync.mjs` | Reads tags and videos from the Google Sheet |
+| `scripts/build_pages.mjs` | Share pages `m/`, `p/` and the CSV feeds the sheet imports (deploy time, not committed) |
+| `scripts/cache_bust.mjs` | Stamps every asset and module import with the commit at deploy |
+| `scripts/lib/` | Pure script helpers (CSV, cache-busting), unit-tested |
+| `tools/extract/` | C# (GBX.NET) TM2020 input extractor, same output format as the TMTAS Input Extractor |
+| `tests/` | `node --test` unit and end-to-end tests (no dependencies) |
+
+**Conventions**
+- No build step and no dependencies for the site: plain ES modules.
+- Anything from outside (names, links, sheet cells) goes through `esc()`; interactivity uses `data-action` attributes handled in `main.js`, never inline `onclick` with data in it.
+- Logic that can be pure lives in `js/model.js`, `js/format.js` or `scripts/lib/` and gets a test.
+
+## Development
+
+```bash
+npm test               # unit + end-to-end tests (Node 20+, no install needed)
+npm run check          # syntax-check every JS file
+npm run serve          # serve the site locally, open http://localhost:3000
+npm run update         # refresh WRs + TAS runs (Trackmania.io is rate-limited: ~10 min)
+npm run sync-sheet     # read tags/videos from the Google Sheet
+npm run build          # build share pages and sheet feeds
+```
+Pull requests run `npm run check` and `npm test` (`.github/workflows/ci.yml`).
 
 ## Adding a TAS run
 
@@ -39,14 +79,6 @@ Score = average of Great 100 · Good 75 · Okay 50 · Meh 25.
 ## Player profiles
 
 Click any player name (map page, Stats tab) or go to `#player-<name>`: best TASes, time saved, cuts, ratings, per-edition breakdown, every run and any human WRs they hold.
-
-## Run locally
-
-```bash
-node scripts/update.mjs          # refresh WRs + TAS (takes ~15 min: Trackmania.io rate limits)
-node scripts/update.mjs --maps   # also re-download the map list
-npx serve .                      # open http://localhost:3000
-```
 
 ## Campaign IDs (club 3074)
 

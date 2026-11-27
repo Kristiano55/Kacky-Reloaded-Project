@@ -9,24 +9,12 @@
 // best-TAS time it was added for; once a faster TAS replaces it, it's flagged outdated
 // (the sheet paints it red via the "outdated" columns of data/sheet_extra.csv).
 import { readFile, writeFile } from 'node:fs/promises';
+import { parseCsv } from './lib/csv.mjs';
 
 const rd = async (f, d) => { try { return JSON.parse(await readFile(f, 'utf8')); } catch { return d; } };
 const cfg = await rd('data/gsheet.json', null);
 if (!cfg?.id) { console.log('gsheet: no data/gsheet.json, skipping'); process.exit(0); }
 
-function parseCsv(text) {
-  const rows = []; let row = [], cell = '', q = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (q) { if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
-    else if (c === '"') q = true;
-    else if (c === ',') { row.push(cell); cell = ''; }
-    else if (c === '\n') { row.push(cell.replace(/\r$/, '')); rows.push(row); row = []; cell = ''; }
-    else cell += c;
-  }
-  if (cell || row.length) { row.push(cell); rows.push(row); }
-  return rows;
-}
 async function tab(gid) {
   const url = `https://docs.google.com/spreadsheets/d/${cfg.id}/export?format=csv&gid=${gid}`;
   const res = await fetch(url, { redirect: 'follow' });

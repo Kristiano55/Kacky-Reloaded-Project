@@ -3,6 +3,8 @@
 //   p/<slug>.html    -> preview: player's TAS count and time saved  -> redirects to /#player-<name>
 // Discord, Twitter/X, WhatsApp etc. read these tags; people are sent straight to the real page.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { fmt, esc, slug } from '../js/format.js';
+import { toCsv } from './lib/csv.mjs';
 
 const BASE = process.env.SITE_URL || 'https://kristiano55.github.io/Kacky-Reloaded-Project';
 const rd = async (f, d) => { try { return JSON.parse(await readFile(f, 'utf8')); } catch { return d; } };
@@ -11,13 +13,6 @@ const wr = await rd('data/wr.json', {});
 const tas = await rd('data/tas.json', {});
 const COL = ['', '#ffffff', '#5bff8a', '#3da5ff', '#ff4d6d', '#b06bff', '#ffc83d', '#35e0ff'];
 
-export const slug = (n) => String(n).replace(/[^A-Za-z0-9._-]/g, (c) => '_' + c.codePointAt(0).toString(16));
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const fmt = (ms) => {
-  if (ms == null) return '—';
-  const m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60, r = ms % 1000;
-  return (m ? `${m}:${String(s).padStart(2, '0')}` : `${s}`) + '.' + String(r).padStart(3, '0');
-};
 const gapTxt = (d) => (d < 0 ? '−' : '+') + fmt(Math.abs(d));
 
 const page = ({ title, desc, image, color, target, self }) => `<!DOCTYPE html>
@@ -67,7 +62,6 @@ console.log(`share pages: ${maps.length} maps, ${Object.keys(players).length} pl
 // ---- CSV feeds for the Google Sheet (IMPORTDATA), one row per map in map order ----
 const classify = await rd('data/classify.json', {});
 const videos = await rd('data/videos.json', []);
-const q = (v) => (v == null ? '' : /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v));
 const core = [['#', 'Edition', 'Author', 'WR (s)', 'WR holder', 'Best TAS (s)', 'TAS by', 'Gap vs WR (s)']];
 const extra = [['Status', 'Author time (s)', 'WR date', 'Map UID', 'Replay', 'Video outdated', 'Tags outdated', 'TAS runs']];
 for (const m of maps) {
@@ -81,6 +75,6 @@ for (const m of maps) {
     videos.some((v) => v.map === m.id && v.outdated) ? 'TRUE' : 'FALSE', classify[m.uid]?.outdated ? 'TRUE' : 'FALSE', runs.length,
   ]);
 }
-await writeFile('data/sheet_core.csv', core.map((r) => r.map(q).join(',')).join('\n') + '\n');
-await writeFile('data/sheet_extra.csv', extra.map((r) => r.map(q).join(',')).join('\n') + '\n');
+await writeFile('data/sheet_core.csv', toCsv(core));
+await writeFile('data/sheet_extra.csv', toCsv(extra));
 console.log('sheet feeds: data/sheet_core.csv, data/sheet_extra.csv');
