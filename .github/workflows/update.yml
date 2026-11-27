@@ -111,7 +111,7 @@ jobs:
       cancel-in-progress: false
     environment:
       name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
+      url: ${{ steps.deploy.outputs.page_url || steps.deploy_retry.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -129,7 +129,16 @@ jobs:
       - uses: actions/upload-pages-artifact@v5
         with:
           path: .
+      # GitHub's artifact API sometimes lags a few seconds behind the upload
+      # ("No artifacts named github-pages were found"), so wait briefly and retry once.
+      - run: sleep 10
       - id: deploy
+        continue-on-error: true
+        uses: actions/deploy-pages@v5
+      - if: steps.deploy.outcome == 'failure'
+        run: sleep 45
+      - id: deploy_retry
+        if: steps.deploy.outcome == 'failure'
         uses: actions/deploy-pages@v5
 
   # Keeps the 30-minute cycle going even when GitHub skips the cron schedule:
