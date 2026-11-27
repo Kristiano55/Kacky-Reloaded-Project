@@ -79,6 +79,9 @@ jobs:
     # runs right away on push; after the data job on schedule / manual runs
     if: always() && (needs.data.result == 'skipped' || (needs.data.result == 'success' && needs.data.outputs.changed == 'true'))
     runs-on: ubuntu-latest
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
