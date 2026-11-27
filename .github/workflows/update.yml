@@ -34,12 +34,12 @@ jobs:
     steps:
       - id: t
         run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Restore run state (check times, TMTAS cursor)
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: .state
           key: state-${{ github.run_id }}
@@ -47,16 +47,23 @@ jobs:
       - name: Fetch WRs (Trackmania.io) and TAS runs (TMTAS Exchange)
         if: github.event_name == 'schedule' || inputs.fetch
         run: node scripts/update.mjs
-      - uses: actions/setup-dotnet@v4
+      - name: Any replays without extracted inputs?
+        id: need
+        run: |
+          n=$(node -e "const fs=require('fs');const t=JSON.parse(fs.readFileSync('data/tas.json'));console.log(Object.values(t).flat().filter(r=>!fs.existsSync('data/inputs/'+r.id+'.txt')).length)")
+          echo "missing=$n" >> "$GITHUB_OUTPUT"; echo "$n replays need inputs"
+      - uses: actions/setup-dotnet@v6
+        if: steps.need.outputs.missing != '0'
         with:
           dotnet-version: '8.0.x'
       - name: Extract TAS inputs from replays (GBX.NET)
+        if: steps.need.outputs.missing != '0'
         run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
       - name: Read tags and videos from the Google Sheet
         run: node scripts/gsheet_sync.mjs
       - name: Save run state
         if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: .state
           key: state-${{ github.run_id }}
@@ -86,19 +93,19 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
       - name: Build share pages (link previews)
         run: node scripts/build_pages.mjs
       - name: Cache-bust assets
         run: sed -i "s/?v=dev/?v=${GITHUB_SHA::8}/g" index.html
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: .
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   # Keeps the 30-minute cycle going even when GitHub skips the cron schedule:
   # waits until 30 min after this run started, then starts the next run.

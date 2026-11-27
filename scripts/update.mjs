@@ -51,7 +51,7 @@ if (!maps.length || !('file' in maps[0]) || process.argv.includes('--maps')) {
       await sleep(1500);
     }
   }
-  await writeFile('data/maps.json', JSON.stringify(maps, null, 1));
+  await writeFile('data/maps.json', JSON.stringify(maps));
 }
 
 // 2. TAS runs from TMTAS Exchange — incremental to keep requests minimal:
@@ -121,6 +121,14 @@ if (undated.length && now - (tstate.datesTried || 0) > 6 * 3600) {
   const list = (await tget(`/replays?minDate=${now - 180 * 86400}`)) || [];
   for (const r of list) if (r.id >= minId) dates[r.id] = r.date;
   tstate.datesTried = now;
+}
+// Still undated (older than the window above): look them up per map by TMX id, at most 10 maps per run
+const stillUndated = Object.entries(tas).filter(([, rs]) => rs.some((r) => !dates[r.id]));
+for (const [uid] of stillUndated.slice(0, 10)) {
+  const m = maps.find((x) => x.uid === uid);
+  if (!m?.tmx) continue;
+  requests++;
+  for (const r of (await tget(`/replays?tmx_id=${m.tmx}`)) || []) if (r.date) dates[r.id] = r.date;
 }
 await writeFile('data/tas_dates.json', JSON.stringify(dates));
 tstate.lastCheck = now;

@@ -57,7 +57,7 @@ input:focus,select:focus{border-color:var(--acc)}
 .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;text-align:left;color:inherit;font:inherit;padding:0}
 .card:hover{transform:translateY(-2px);border-color:var(--c);box-shadow:0 10px 30px -14px var(--c)}
 .card:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c)}
-.thumb{height:92px;background:#0b0d13 center/cover no-repeat;position:relative}
+.thumb{height:92px;background:linear-gradient(135deg,#141a26,#0a0c12) center/cover no-repeat;position:relative}
 .thumb:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 20%,var(--card))}
 .num{position:absolute;left:14px;bottom:4px;z-index:2;font:700 30px var(--disp);font-style:italic;letter-spacing:-.01em;text-shadow:0 2px 12px #000}
 .num small{font-size:13px;color:var(--c);margin-right:2px;font-style:normal;vertical-align:4px}

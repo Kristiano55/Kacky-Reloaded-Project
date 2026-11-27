@@ -108,11 +108,12 @@ function render() {
   list.sort(S[state.sort]);
   $('#empty').hidden = list.length > 0;
   $('#grid').innerHTML = list.map(card).join('');
+  lazyThumbs();
 }
 
 function card(m) {
   const badge = m.gap < 0 ? '<span class="badge beat">TAS &lt; WR</span>' : m.best ? '<span class="badge tas">TAS</span>' : '<span class="badge">No TAS</span>';
-  const thumb = m.thumb ? `style="background-image:url('${esc(m.thumb)}')"` : `style="background-image:linear-gradient(135deg,#141a26,#0a0c12)"`;
+  const thumb = m.thumb ? `data-bg="${esc(m.thumb)}"` : '';
   return `<button class="card" style="--c:${ED_COL[m.ed]}" onclick="openMap(${m.id})">
     <div class="thumb" ${thumb}><div class="num"><small>KR${m.ed}</small>#${m.id}</div>${badge}</div>
     <div class="cb"><div class="au">by ${esc(m.author || 'unknown')}</div>
@@ -394,5 +395,13 @@ function renderLatest() {
     </div>`;
 }
 window.selectLatest = (id) => { LATEST_SEL = id; renderLatest(); };
+
+// Thumbnails load only when a card scrolls near the screen (525 images otherwise)
+const thumbObs = 'IntersectionObserver' in window ? new IntersectionObserver((entries) => {
+  for (const e of entries) if (e.isIntersecting) { e.target.style.backgroundImage = `url('${e.target.dataset.bg}')`; thumbObs.unobserve(e.target); }
+}, { rootMargin: '600px 0px' }) : null;
+function lazyThumbs() {
+  document.querySelectorAll('.thumb[data-bg]').forEach((el) => (thumbObs ? thumbObs.observe(el) : (el.style.backgroundImage = `url('${el.dataset.bg}')`)));
+}
 
 init();
