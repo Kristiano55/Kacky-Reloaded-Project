@@ -30,6 +30,7 @@ jobs:
     timeout-minutes: 50
     outputs:
       started: ${{ steps.t.outputs.started }}
+      changed: ${{ steps.commit.outputs.changed }}
     steps:
       - id: t
         run: echo "started=$(date +%s)" >> "$GITHUB_OUTPUT"
@@ -37,6 +38,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Restore run state (check times, TMTAS cursor)
+        uses: actions/cache/restore@v4
+        with:
+          path: .state
+          key: state-${{ github.run_id }}
+          restore-keys: state-
       - name: Fetch WRs (Trackmania.io) and TAS runs (TMTAS Exchange)
         if: github.event_name == 'schedule' || inputs.fetch
         run: node scripts/update.mjs
@@ -45,19 +52,30 @@ jobs:
           dotnet-version: '8.0.x'
       - name: Extract TAS inputs from replays (GBX.NET)
         run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
-      - name: Commit data
+      - name: Save run state
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .state
+          key: state-${{ github.run_id }}
+      - name: Commit data (only when records actually changed)
+        id: commit
         run: |
           git config user.name "kacky-bot"
           git config user.email "actions@users.noreply.github.com"
           git add data
-          git diff --cached --quiet || git commit -m "data: refresh $(date -u +%F' '%H:%M)"
+          if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "no data changes"; exit 0; fi
+          echo "{\"at\":\"$(date -u +%FT%TZ)\"}" > data/updated.json && git add data/updated.json
+          summary=$(git diff --cached --name-only | sed 's#data/##' | sed 's#inputs/.*#inputs#' | sort -u | paste -sd, -)
+          git commit -m "data: $summary"
           git pull --rebase origin main
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: data
     # runs right away on push; after the data job on schedule / manual runs
-    if: always() && (needs.data.result == 'success' || needs.data.result == 'skipped')
+    if: always() && (needs.data.result == 'skipped' || (needs.data.result == 'success' && needs.data.outputs.changed == 'true'))
     runs-on: ubuntu-latest
     environment:
       name: github-pages

@@ -31,7 +31,7 @@ async function init() {
     const w = wr[m.uid]?.t ? wr[m.uid] : undefined;
     return { ...m, wr: w, runs, best, gap: best && w ? best.t - w.t : null, cut: cls[m.uid]?.cut || '', rating: cls[m.uid]?.rating || '' };
   });
-  if (upd.at) $('#updated').textContent = 'Data refreshed ' + new Date(upd.at).toLocaleString();
+  if (upd.at) $('#updated').textContent = 'Last new record ' + new Date(upd.at).toLocaleString();
   readHash();
   buildChips();
   stats();

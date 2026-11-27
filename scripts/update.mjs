@@ -30,6 +30,9 @@ async function tmio(path, tries = 8) {
 async function readJson(f, d) { try { return JSON.parse(await readFile(f, 'utf8')); } catch { return d; } }
 
 await mkdir('data', { recursive: true });
+// Bookkeeping that changes every run (when each WR was last checked, TMTAS cursor) lives in .state/,
+// which the workflow keeps in the Actions cache — not in git — so commits only happen on real changes.
+await mkdir('.state', { recursive: true });
 
 // 1. Maps (only re-fetched if missing or with --maps)
 let maps = await readJson('data/maps.json', []);
@@ -56,7 +59,7 @@ if (!maps.length || !('file' in maps[0]) || process.argv.includes('--maps')) {
 //    A full 525-map sweep runs once a day as a safety net (deleted/edited runs).
 const TMTAS = 'https://tmtas.exchange/api';
 const tget = (path) => fetch(TMTAS + path, { headers: { 'User-Agent': UA } }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-const tstate = await readJson('data/tmtas_state.json', { lastCheck: 0, lastFull: 0, tracks: {} });
+const tstate = await readJson('.state/tmtas_state.json', await readJson('data/tmtas_state.json', { lastCheck: 0, lastFull: 0, tracks: {} }));
 const tas = await readJson('data/tas.json', {});
 const byId = Object.fromEntries(maps.map((m) => [m.id, m]));
 const dates = await readJson('data/tas_dates.json', {}); // replay id -> upload time (unix s), for "latest TASes"
@@ -122,27 +125,30 @@ if (undated.length && now - (tstate.datesTried || 0) > 6 * 3600) {
 await writeFile('data/tas_dates.json', JSON.stringify(dates));
 tstate.lastCheck = now;
 await writeFile('data/tas.json', JSON.stringify(tas));
-await writeFile('data/tmtas_state.json', JSON.stringify(tstate));
+await writeFile('.state/tmtas_state.json', JSON.stringify(tstate));
 console.log(`TAS: ${Object.keys(tas).length} maps with runs, ${requests} TMTAS requests this run`);
 
 // 3. Human WRs from Trackmania.io — rate limited, so each run gets a time budget
 //    and refreshes the maps that were checked longest ago first.
 const BUDGET = Number(process.env.WR_BUDGET_MIN || 10) * 60_000;
 const wr = await readJson('data/wr.json', {});
-const queue = maps.slice().sort((a, b) => (wr[a.uid]?.c || 0) - (wr[b.uid]?.c || 0));
+const checked = await readJson('.state/wr_checked.json', Object.fromEntries(Object.entries(wr).map(([u, w]) => [u, w.c || 0])));
+for (const w of Object.values(wr)) delete w.c;
+const queue = maps.slice().sort((a, b) => (checked[a.uid] || 0) - (checked[b.uid] || 0));
 const t0 = Date.now();
-let checked = 0;
+let nChecked = 0;
 for (const m of queue) {
   if (Date.now() - t0 > BUDGET) break;
   try {
     const j = await tmio(`/leaderboard/${m.lb}/${m.uid}?offset=0&length=1`);
     const t = j.tops?.[0];
-    if (t) wr[m.uid] = { t: t.time, by: t.player?.name, date: (t.timestamp || '').slice(0, 10), c: Date.now() };
-    else wr[m.uid] = { ...(wr[m.uid] || {}), c: Date.now() };
-    checked++;
+    if (t) wr[m.uid] = { t: t.time, by: t.player?.name, date: (t.timestamp || '').slice(0, 10) };
+    checked[m.uid] = Date.now();
+    nChecked++;
   } catch (e) { console.warn(e.message); }
   await sleep(700);
 }
 await writeFile('data/wr.json', JSON.stringify(wr));
-console.log(`WR: refreshed ${checked}/${maps.length} (oldest first) in ${Math.round((Date.now() - t0) / 1000)}s`);
-await writeFile('data/updated.json', JSON.stringify({ at: new Date().toISOString() }));
+await writeFile('.state/wr_checked.json', JSON.stringify(checked));
+console.log(`WR: refreshed ${nChecked}/${maps.length} (oldest first) in ${Math.round((Date.now() - t0) / 1000)}s`);
+
