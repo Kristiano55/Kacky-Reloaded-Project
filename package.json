@@ -9,7 +9,11 @@
     "update": "node scripts/update.mjs",
     "sync-sheet": "node scripts/gsheet_sync.mjs",
     "build": "node scripts/build_pages.mjs",
-    "serve": "npx --yes serve ."
+    "serve": "npx --yes serve .",
+    "lint": "npx --yes eslint@10 .",
+    "bundle": "node scripts/build_pages.mjs && node scripts/bundle.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

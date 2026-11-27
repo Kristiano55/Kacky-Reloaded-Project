@@ -4,8 +4,17 @@ import { $, store, mapById, edColor, TMTAS, SITE } from '../store.js';
 import { canGoBack } from '../router.js';
 import { playerLink, tags, videoCard, copyButton, pageButtons } from '../html.js';
 
-/** Fetch the map's TAS runs live from TMTAS Exchange (fresher than the 30-minute data refresh). */
+/** Fetch the map's TAS runs live from TMTAS Exchange (fresher than the 30-minute data refresh).
+ *  Cached for 5 minutes, so reopening a map doesn't ask again. */
+const liveCache = new Map();
 async function liveRuns(m) {
+  const hit = liveCache.get(m.uid);
+  if (hit && Date.now() - hit.at < 5 * 60_000) return hit.runs;
+  const runs = await fetchRuns(m);
+  liveCache.set(m.uid, { at: Date.now(), runs });
+  return runs;
+}
+async function fetchRuns(m) {
   const j = await fetch(`${TMTAS}/api/tick/leaderboard?map_uid=${encodeURIComponent(m.uid)}`).then((r) => r.json());
   const cats = Object.fromEntries((j.categories || []).map((c) => [c.id, c.name]));
   return (j.records || [])

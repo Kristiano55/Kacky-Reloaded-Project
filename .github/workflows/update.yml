@@ -79,6 +79,12 @@ jobs:
       - name: Extract TAS inputs from replays (GBX.NET)
         if: steps.need.outputs.missing != '0'
         run: dotnet run --project tools/extract -c Release -- data/tas.json data/inputs
+      - name: Any maps without a card thumbnail?
+        id: thumbs
+        run: echo "missing=$(node -e "const fs=require('fs');console.log(require('./data/maps.json').filter(m=>m.thumb&&!fs.existsSync('thumbs/'+m.id+'.webp')).length)")" >> "$GITHUB_OUTPUT"
+      - name: Make card thumbnails (640x180 WebP)
+        if: steps.thumbs.outputs.missing != '0'
+        run: pip install --quiet pillow && python3 scripts/thumbs.py
       - name: Read tags and videos from the Google Sheet
         run: node scripts/gsheet_sync.mjs
       - name: Save run state
@@ -92,7 +98,7 @@ jobs:
         run: |
           git config user.name "kacky-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data
+          git add data thumbs 2>/dev/null || git add data
           if git diff --cached --quiet; then echo "changed=false" >> "$GITHUB_OUTPUT"; echo "no data changes"; exit 0; fi
           echo "{\"at\":\"$(date -u +%FT%TZ)\"}" > data/updated.json && git add data/updated.json
           summary=$(git diff --cached --name-only | sed 's#data/##' | sed 's#inputs/.*#inputs#' | sort -u | paste -sd, -)
@@ -120,15 +126,18 @@ jobs:
         with:
           node-version: 22
       - name: Check and test (a broken build never reaches the site)
-        run: npm run -s check && npm test
-      - name: Build share pages and sheet feeds
+        run: npm run -s check && npm run -s lint && npm test
+      - name: Build share pages, sheet feeds and data/site.json
         run: node scripts/build_pages.mjs
+      - name: Bundle and minify into _site/
+        run: node scripts/bundle.mjs
       - name: Cache-bust assets
-        run: node scripts/cache_bust.mjs "${GITHUB_SHA::8}"
+        working-directory: _site
+        run: node ../scripts/cache_bust.mjs "${GITHUB_SHA::8}"
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
-          path: .
+          path: _site
       # GitHub's artifact API sometimes lags a few seconds behind the upload
       # ("No artifacts named github-pages were found"), so wait briefly and retry once.
       - run: sleep 10

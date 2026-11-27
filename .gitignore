@@ -8,3 +8,7 @@ m/
 p/
 data/sheet_core.csv
 data/sheet_extra.csv
+data/site.json
+js/app.min.js
+style.min.css
+_site/

@@ -4,11 +4,14 @@ import { filterMaps } from '../model.js';
 import { $, store, state, edColor } from '../store.js';
 import { tags } from '../html.js';
 
+/** Small 640×180 WebP made by the data job when available; the 1024×1024 original otherwise. */
+const thumbUrl = (m) => (m.ts ? `thumbs/${m.id}.webp` : m.thumb);
+
 function card(m) {
   const badge = m.gap < 0 ? '<span class="badge beat">TAS &lt; WR</span>' : m.best ? '<span class="badge tas">TAS</span>' : '<span class="badge">No TAS</span>';
   const delta = m.gap == null ? (m.best ? 'no WR data' : 'Waiting for a TAS') : fmtGap(m.gap) + ' vs WR';
   return `<button class="card" data-action="map" data-id="${m.id}" style="--c:${edColor(m.ed)}">
-    <div class="thumb" ${m.thumb ? `data-bg="${esc(m.thumb)}"` : ''}><div class="num"><small>KR${m.ed}</small>#${m.id}</div>${badge}</div>
+    <div class="thumb" ${thumbUrl(m) ? `data-bg="${esc(thumbUrl(m))}"` : ''}><div class="num"><small>KR${m.ed}</small>#${m.id}</div>${badge}</div>
     <div class="cb"><div class="au">by ${esc(m.author || 'unknown')}</div>
       <div class="rows">
         <div class="r"><span class="k">WR</span><span class="v">${fmt(m.wr?.t)}</span><span class="w">${esc(m.wr?.by || '')}</span></div>

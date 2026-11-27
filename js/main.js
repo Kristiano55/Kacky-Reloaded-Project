@@ -20,7 +20,20 @@ import { renderVideos } from './views/videos.js';
 import { showMapPage, toggleInputs } from './views/mapPage.js';
 import { showPlayerPage } from './views/playerPage.js';
 
-const load = (f, d) => fetch(f, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : d)).catch(() => d);
+const load = (f, d) => fetch(f).then((r) => (r.ok ? r.json() : d)).catch(() => d);
+
+/** One request in production (data/site.json, built at deploy and preloaded by index.html);
+ *  the separate files when running from source without a build. */
+async function loadData() {
+  const v = document.querySelector('link[rel=preload][as=fetch]')?.getAttribute('href') || 'data/site.json';
+  const site = await load(v, null);
+  if (site?.maps) return site;
+  const [maps, wr, tas, updated, classify, videos, dates] = await Promise.all([
+    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}),
+    load('data/classify.json', {}), load('data/videos.json', []), load('data/tas_dates.json', {}),
+  ]);
+  return { maps, wr, tas, classify, videos, dates, updated: updated.at || null };
+}
 
 export function render() {
   markChips();
@@ -79,11 +92,8 @@ function wireControls() {
 }
 
 async function init() {
-  const [maps, wr, tas, updated, classify, videos, dates] = await Promise.all([
-    load('data/maps.json', []), load('data/wr.json', {}), load('data/tas.json', {}), load('data/updated.json', {}),
-    load('data/classify.json', {}), load('data/videos.json', []), load('data/tas_dates.json', {}),
-  ]);
-  Object.assign(store, { maps: buildMaps({ maps, wr, tas, classify }), videos, dates, updated: updated.at || null });
+  const { maps, wr, tas, classify, videos, dates, updated } = await loadData();
+  Object.assign(store, { maps: buildMaps({ maps, wr, tas, classify }), videos, dates, updated });
   if (store.updated) $('#updated').textContent = 'Last new record ' + new Date(store.updated).toLocaleString();
 
   const options = (sel) => [...$(sel).options].map((o) => o.value);

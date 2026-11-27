@@ -16,7 +16,9 @@ Google Sheet ───┘   scripts/gsheet_sync.mjs     └──► data/inputs
        .github/workflows/update.yml, every 30 min            └──► deploy: scripts/build_pages.mjs (share pages, sheet feeds)
 ```
 
-The data job commits only when a record actually changes; deploys run the checks and tests first.
+The data job commits only when a record actually changes; deploys run the checks, lint and tests first.
+
+**What a visitor downloads:** `index.html`, one minified JS bundle, one minified stylesheet, one data file (`data/site.json`, preloaded) and self-hosted fonts, all from the same server. Card thumbnails are 640×180 WebP copies (`thumbs/`, made once per map by the data job) and load only as you scroll. The live TMTAS check on a map page is cached for 5 minutes.
 
 ## Project structure
 
@@ -34,7 +36,10 @@ The data job commits only when a record actually changes; deploys run the checks
 | `scripts/update.mjs` | Fetches WRs (Trackmania.io, rate-limited, oldest first) and TAS runs (TMTAS, incremental) |
 | `scripts/gsheet_sync.mjs` | Reads tags and videos from the Google Sheet |
 | `scripts/build_pages.mjs` | Share pages `m/`, `p/` and the CSV feeds the sheet imports (deploy time, not committed) |
-| `scripts/cache_bust.mjs` | Stamps every asset and module import with the commit at deploy |
+| `scripts/bundle.mjs` | Deploy: builds `_site/` (esbuild bundle + minified CSS + only the files visitors need) |
+| `scripts/cache_bust.mjs` | Deploy: stamps every asset URL with the commit |
+| `scripts/thumbs.py` | Data job: 640×180 WebP card thumbnails (Pillow), once per map |
+| `fonts/` | Self-hosted Chakra Petch, Inter, JetBrains Mono (Latin subset, SIL OFL) |
 | `scripts/lib/` | Pure script helpers (CSV, cache-busting), unit-tested |
 | `tools/extract/` | C# (GBX.NET) TM2020 input extractor, same output format as the TMTAS Input Extractor |
 | `tests/` | `node --test` unit and end-to-end tests (no dependencies) |
@@ -49,12 +54,14 @@ The data job commits only when a record actually changes; deploys run the checks
 ```bash
 npm test               # unit + end-to-end tests (Node 20+, no install needed)
 npm run check          # syntax-check every JS file
+npm run lint           # ESLint (no install needed)
+npm run bundle         # build the production site into _site/ (what gets deployed)
 npm run serve          # serve the site locally, open http://localhost:3000
 npm run update         # refresh WRs + TAS runs (Trackmania.io is rate-limited: ~10 min)
 npm run sync-sheet     # read tags/videos from the Google Sheet
 npm run build          # build share pages and sheet feeds
 ```
-Pull requests run `npm run check` and `npm test` (`.github/workflows/ci.yml`).
+Pull requests run `npm run check`, `npm run lint` and `npm test` (`.github/workflows/ci.yml`).
 
 ## Adding a TAS run
 

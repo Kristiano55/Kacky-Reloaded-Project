@@ -3,6 +3,7 @@
 //   p/<slug>.html    -> preview: player's TAS count and time saved  -> redirects to /#player-<name>
 // Discord, Twitter/X, WhatsApp etc. read these tags; people are sent straight to the real page.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { fmt, esc, slug } from '../js/format.js';
 import { toCsv } from './lib/csv.mjs';
 
@@ -78,3 +79,17 @@ for (const m of maps) {
 await writeFile('data/sheet_core.csv', toCsv(core));
 await writeFile('data/sheet_extra.csv', toCsv(extra));
 console.log('sheet feeds: data/sheet_core.csv, data/sheet_extra.csv');
+
+// ---- data/site.json: everything the page needs in one request, only the fields it uses ----
+const dates = await rd('data/tas_dates.json', {});
+const updated = await rd('data/updated.json', {});
+const site = {
+  updated: updated.at || null,
+  maps: maps.map((m) => ({
+    id: m.id, ed: m.ed, uid: m.uid, name: m.name, author: m.author, at: m.at, campaign: m.campaign,
+    thumb: m.thumb, ts: existsSync(`thumbs/${m.id}.webp`) ? 1 : 0, tmx: m.tmx || 0, ...(m.tmx ? {} : { file: m.file }),
+  })),
+  wr, tas, classify, videos, dates,
+};
+await writeFile('data/site.json', JSON.stringify(site));
+console.log(`site data: data/site.json (${Math.round(JSON.stringify(site).length / 1024)} KB)`);
