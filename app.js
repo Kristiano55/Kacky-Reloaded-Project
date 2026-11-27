@@ -174,12 +174,16 @@ function draw(m, live) {
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/leaderboard/${esc(m.uid)}">Trackmania.io leaderboard</a>
     <a class="btn" target="_blank" rel="noopener" href="https://trackmania.io/#/campaigns/3074/${m.campaign}">Campaign</a>
     <a class="btn" target="_blank" rel="noopener" href="${TMTAS}/upload">Upload TAS</a>
+    <button class="btn" onclick="copyShare(SITE + '/m/${m.id}.html', this)" title="Link with a preview card for Discord">🔗 Copy link</button>
     <button class="btn" onclick="navigator.clipboard.writeText('${esc(m.uid)}');this.textContent='Copied ✓'">Copy map UID</button>
   </div></div>`;
 }
 
 $('#modal').addEventListener('close', () => history.replaceState(null, '', `#kr${state.ed || 'all'}`));
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') e.target.close(); });
+const SITE = location.origin + location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
+const slug = (n) => String(n).replace(/[^A-Za-z0-9._-]/g, (c) => '_' + c.codePointAt(0).toString(16));
+window.copyShare = (url, btn) => { navigator.clipboard.writeText(url); const t = btn.textContent; btn.textContent = 'Copied ✓'; setTimeout(() => (btn.textContent = t), 1500); };
 const P = (n) => n ? `<a class="plink" href="#player-${encodeURIComponent(n)}" onclick="event.stopPropagation();openPlayer(decodeURIComponent('${encodeURIComponent(n)}'));return false">${esc(n)}</a>` : '';
 
 function tags(m) {
@@ -272,7 +276,7 @@ function openPlayer(name) {
   $('#m-body').innerHTML = `
   <div class="m-head phead">
     <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>
-    <div class="t"><div class="avatar">${esc(name.slice(0, 1).toUpperCase())}</div><h2>${esc(name)}</h2>
+    <div class="t"><div class="avatar">${esc(name.slice(0, 1).toUpperCase())}</div><h2>${esc(name)} <button class="btn" style="vertical-align:middle;font-style:normal" onclick="copyShare(SITE + '/p/${slug(name)}.html', this)">🔗 Copy link</button></h2>
     <p>${tops.length} best TAS${tops.length === 1 ? '' : 'es'} · ${runs.length} run${runs.length === 1 ? '' : 's'} uploaded${wrs.length ? ` · holds ${wrs.length} human WR${wrs.length === 1 ? '' : 's'}` : ''}</p></div>
   </div>
   <div class="m-sec"><div class="pstats">
