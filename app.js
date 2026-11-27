@@ -61,27 +61,66 @@ function buildChips() {
   $('#eds').innerHTML = ['All', 1, 2, 3, 4, 5, 6, 7].map((e, i) =>
     `<button class="chip" data-ed="${i}" style="--c:${ED_COL[i] || 'var(--acc)'}">${i ? 'KR' + e : e}</button>`).join('');
   $('#eds').onclick = (e) => { const b = e.target.closest('[data-ed]'); if (b) { state.ed = +b.dataset.ed; sync(); } };
-  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; history.replaceState(null, '', state.view !== 'maps' ? '#' + state.view : `#kr${state.ed || 'all'}`); render(); window.scrollTo({ top: $('main').offsetTop - 70, behavior: 'smooth' }); } };
-  $('#q').oninput = (e) => { state.q = e.target.value.toLowerCase(); render(); };
-  $('#filter').onchange = (e) => { state.filter = e.target.value; render(); };
-  $('#sort').onchange = (e) => { state.sort = e.target.value; render(); };
+  $('#views').onclick = (e) => { const b = e.target.closest('[data-view]'); if (b) { state.view = b.dataset.view; sync(); window.scrollTo({ top: $('main').offsetTop - 70, behavior: REDUCED ? 'auto' : 'smooth' }); } };
+  let qt;
+  $('#q').oninput = (e) => { state.q = e.target.value.toLowerCase(); render(); clearTimeout(qt); qt = setTimeout(writeUrl, 400); };
+  $('#filter').onchange = (e) => { state.filter = e.target.value; sync(); };
+  $('#sort').onchange = (e) => { state.sort = e.target.value; sync(); };
 }
 
-function sync() { location.hash = `kr${state.ed || 'all'}`; render(); }
-function readHash() {
-  const m = location.hash.match(/kr(\d|all)/);
-  if (m) state.ed = m[1] === 'all' ? 0 : +m[1];
-  if (location.hash === '#stats') state.view = 'stats';
-  if (location.hash === '#videos') state.view = 'videos';
-  const mm = location.hash.match(/map-(\d+)/);
-  if (mm) setTimeout(() => open(+mm[1]), 0);
-  const pm = location.hash.match(/player-(.+)/);
-  if (pm) setTimeout(() => openPlayer(safeDecode(pm[1])), 0);
+// ---------- URL state: ?ed=&view=&f=&sort=&q= for the view, #map-N / #player-X for an open page ----------
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function viewQuery() {
+  const p = new URLSearchParams();
+  if (state.ed) p.set('ed', state.ed);
+  if (state.view !== 'maps') p.set('view', state.view);
+  if (state.filter !== 'all') p.set('f', state.filter);
+  if (state.sort !== 'id') p.set('sort', state.sort);
+  if (state.q) p.set('q', state.q);
+  const q = p.toString();
+  return location.pathname + (q ? '?' + q : '');
 }
+function writeUrl() { history.replaceState(history.state, '', viewQuery() + (/^#(map|player)-/.test(location.hash) ? location.hash : '')); }
+function sync() { writeUrl(); render(); }
+function readHash() {
+  const p = new URLSearchParams(location.search);
+  if (p.has('ed')) state.ed = Math.min(7, Math.max(0, +p.get('ed') || 0));
+  if (['maps', 'stats', 'videos'].includes(p.get('view'))) state.view = p.get('view');
+  if (p.has('f') && [...$('#filter').options].some((o) => o.value === p.get('f'))) state.filter = p.get('f');
+  if (p.has('sort') && [...$('#sort').options].some((o) => o.value === p.get('sort'))) state.sort = p.get('sort');
+  if (p.has('q')) state.q = p.get('q').toLowerCase();
+  $('#filter').value = state.filter; $('#sort').value = state.sort; $('#q').value = state.q;
+  // older links: #kr4, #stats, #videos
+  const m = location.hash.match(/^#kr(\d|all)$/);
+  if (m) state.ed = m[1] === 'all' ? 0 : +m[1];
+  if (location.hash === '#stats' || location.hash === '#videos') state.view = location.hash.slice(1);
+  if (m || location.hash === '#stats' || location.hash === '#videos') history.replaceState(null, '', viewQuery());
+  setTimeout(() => routeModal(true), 0);
+}
+
+// ---------- map / player pages as history steps (phone back button closes them) ----------
+let depth = 0, pushed = 0, ignorePop = false; // depth: pages deep; pushed: history entries this site added
+function routeModal(initial) {
+  const mm = location.hash.match(/^#map-(\d+)$/), pm = location.hash.match(/^#player-(.+)$/);
+  if (mm) showMap(+mm[1]); else if (pm) showPlayer(safeDecode(pm[1]));
+  else if ($('#modal').open) { closingByNav = true; $('#modal').close(); }
+  if (initial && (mm || pm)) { depth = 1; pushed = 0; }
+}
+let closingByNav = false;
+function navModal(hash) {
+  history.pushState({ modal: true }, '', viewQuery() + hash);
+  pushed++; depth++;
+}
+window.addEventListener('popstate', () => {
+  if (ignorePop) { ignorePop = false; history.replaceState(null, '', viewQuery()); return; }
+  pushed = Math.max(0, pushed - 1); depth = Math.max(0, depth - 1);
+  routeModal(false);
+});
+function backButton() { return depth > 1 && pushed > 0 ? `<button class="back" onclick="history.back()" aria-label="Back">← Back</button>` : ''; }
 
 function render() {
-  document.querySelectorAll('#eds .chip').forEach((b) => b.classList.toggle('on', +b.dataset.ed === state.ed));
-  document.querySelectorAll('#views .chip').forEach((b) => b.classList.toggle('on', b.dataset.view === state.view));
+  document.querySelectorAll('#eds .chip').forEach((b) => { const on = +b.dataset.ed === state.ed; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+  document.querySelectorAll('#views .chip').forEach((b) => { const on = b.dataset.view === state.view; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
   const stats = state.view === 'stats', vids = state.view === 'videos';
   $('#statsView').hidden = !stats; $('#videosView').hidden = !vids; $('#grid').hidden = stats || vids;
   $('.tools').style.visibility = stats || vids ? 'hidden' : '';
@@ -125,10 +164,14 @@ function card(m) {
     </div></button>`;
 }
 
-async function open(id) {
+function open(id) {
+  if (!MAPS.find((x) => x.id === id)) return;
+  if (location.hash !== `#map-${id}`) navModal(`#map-${id}`);
+  showMap(id);
+}
+async function showMap(id) {
   const m = MAPS.find((x) => x.id === id);
   if (!m) return;
-  history.replaceState(null, '', `#map-${id}`);
   const dlg = $('#modal');
   draw(m);
   if (!dlg.open) dlg.showModal();
@@ -149,7 +192,7 @@ function draw(m, live) {
   const head = m.thumb ? `background-image:url('${esc(m.thumb)}')` : 'background-image:linear-gradient(135deg,#18202e,#0a0c12)';
   $('#m-body').innerHTML = `
   <div class="m-head" style="${head};--c:${ED_COL[m.ed]}">
-    <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>
+    <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>${backButton()}
     <div class="t"><h2><small>KR${m.ed}</small>#${m.id}</h2><p>by ${esc(m.author)} · author time ${fmt(m.at)}</p></div>
   </div>
   <div class="m-sec">
@@ -161,10 +204,10 @@ function draw(m, live) {
   </div>
   <div class="m-sec">
     <h3>TAS runs ${live ? '<span class="muted" style="font-size:11px">· live</span>' : ''}</h3>
-    ${m.runs.length ? `<table><tr><th>#</th><th>Runner</th><th>Time</th><th>Category</th><th></th></tr>
+    ${m.runs.length ? `<div class="tw"><table><tr><th>#</th><th>Runner</th><th>Time</th><th>Category</th><th></th></tr>
       ${m.runs.map((r, i) => `<tr><td class="mono">${i + 1}</td><td>${P(r.by)}</td><td class="mono">${fmt(r.t)}</td><td class="muted">${esc(r.cat)}</td>
       <td style="text-align:right;white-space:nowrap"><button class="btn pri" onclick="showInputs(${r.id},this)">⌨ Inputs</button> <a class="btn" href="${esc(r.replay)}" title="Download replay">⬇</a></td></tr>
-      <tr class="inrow" id="in-${r.id}" hidden><td colspan="5"></td></tr>`).join('')}</table>`
+      <tr class="inrow" id="in-${r.id}" hidden><td colspan="5"></td></tr>`).join('')}</table></div>`
       : `<p class="muted">No TAS on TMTAS Exchange yet. Be the first: <a href="${TMTAS}/upload" target="_blank" rel="noopener">upload a replay</a>.</p>`}
   </div>
   ${(() => { const v = VIDEOS.filter((x) => x.map === m.id).sort((a, b) => a.outdated - b.outdated); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
@@ -180,7 +223,13 @@ function draw(m, live) {
   </div></div>`;
 }
 
-$('#modal').addEventListener('close', () => history.replaceState(null, '', `#kr${state.ed || 'all'}`));
+$('#modal').addEventListener('close', () => {
+  if (closingByNav) { closingByNav = false; depth = 0; pushed = 0; return; }
+  // closed with ✕ / Esc / backdrop: undo only the history steps this site added (never leave the site)
+  const n = pushed; depth = 0; pushed = 0;
+  if (n > 0) { ignorePop = true; history.go(-n); } // URL is tidied in the popstate handler
+  else history.replaceState(null, '', viewQuery());
+});
 $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') e.target.close(); });
 const SITE = location.origin + location.pathname.replace(/index\.html$/, '').replace(/\/$/, '');
 const slug = (n) => String(n).replace(/[^A-Za-z0-9._-]/g, (c) => '_' + c.codePointAt(0).toString(16));
@@ -272,7 +321,11 @@ async function showInputs(id, btn) {
 window.showInputs = showInputs;
 
 function openPlayer(name) {
-  history.replaceState(null, '', '#player-' + encodeURIComponent(name));
+  const h = '#player-' + encodeURIComponent(name);
+  if (location.hash !== h) navModal(h);
+  showPlayer(name);
+}
+function showPlayer(name) {
   const runs = [];
   MAPS.forEach((m) => m.runs.forEach((r, i) => { if (r.by === name) runs.push({ m, r, rank: i + 1 }); }));
   const tops = runs.filter((x) => x.rank === 1);
@@ -284,7 +337,7 @@ function openPlayer(name) {
   runs.sort((a, b) => a.m.id - b.m.id);
   $('#m-body').innerHTML = `
   <div class="m-head phead">
-    <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>
+    <button class="x" onclick="document.getElementById('modal').close()" aria-label="Close">✕</button>${backButton()}
     <div class="t"><div class="avatar">${esc(name.slice(0, 1).toUpperCase())}</div><h2>${esc(name)} <button class="btn" style="vertical-align:middle;font-style:normal" onclick="copyShare(SITE + '/p/${slug(name)}.html', this)">🔗 Copy link</button></h2>
     <p>${tops.length} best TAS${tops.length === 1 ? '' : 'es'} · ${runs.length} run${runs.length === 1 ? '' : 's'} uploaded${wrs.length ? ` · holds ${wrs.length} human WR${wrs.length === 1 ? '' : 's'}` : ''}</p></div>
   </div>
@@ -297,10 +350,10 @@ function openPlayer(name) {
   <div class="tags" style="margin-top:12px"><span class="tag cut-normal">${cnt('Normal cut')} Normal cuts</span><span class="tag cut-uber">${cnt('Uber')} Ubers</span><span class="tag cut-noseboost">${cnt('Noseboost')} Noseboosts</span></div>
   </div>
   ${perEd.length ? `<div class="m-sec"><h3>By edition</h3>${perEd.map((x) => `<div class="edbar"><b style="color:${ED_COL[x.e]}">KR${x.e}</b><div class="meter" style="--c:${ED_COL[x.e]}"><i style="width:${(x.n / maxEd) * 100}%"></i></div><span class="mono">${x.n}</span></div>`).join('')}</div>` : ''}
-  <div class="m-sec"><h3>TAS runs</h3>${runs.length ? `<table><tr><th>Map</th><th>Time</th><th>Rank</th><th>vs WR</th><th></th></tr>
+  <div class="m-sec"><h3>TAS runs</h3>${runs.length ? `<div class="tw"><table><tr><th>Map</th><th>Time</th><th>Rank</th><th>vs WR</th><th></th></tr>
     ${runs.map((x) => { const g = x.m.wr ? x.r.t - x.m.wr.t : null; return `<tr class="click" onclick="openMap(${x.m.id})"><td><b style="color:${ED_COL[x.m.ed]}">KR${x.m.ed}</b> #${x.m.id}</td>
       <td class="mono">${fmt(x.r.t)}</td><td class="mono">${x.rank === 1 ? '<span class="tag r-great">#1</span>' : '#' + x.rank}</td>
-      <td class="mono ${g < 0 ? 'neg' : 'pos'}">${g == null ? '—' : fmtGap(g)}</td><td>${tags(x.m).replace('class="tags"', 'class="tags" style="margin:0"')}</td></tr>`; }).join('')}</table>` : '<p class="muted">No TAS runs.</p>'}</div>
+      <td class="mono ${g < 0 ? 'neg' : 'pos'}">${g == null ? '—' : fmtGap(g)}</td><td>${tags(x.m).replace('class="tags"', 'class="tags" style="margin:0"')}</td></tr>`; }).join('')}</table></div>` : '<p class="muted">No TAS runs.</p>'}</div>
   ${(() => { const v = VIDEOS.filter((x) => x.runner && x.runner.toLowerCase() === name.toLowerCase()); return v.length ? `<div class="m-sec"><h3>Videos</h3><div class="vgrid one">${v.map(vcard).join('')}</div></div>` : ''; })()}
   ${wrs.length ? `<div class="m-sec"><h3>Human world records</h3><div class="links">${wrs.map((m) => `<button class="btn" onclick="openMap(${m.id})">KR${m.ed} #${m.id} · ${fmt(m.wr.t)}</button>`).join('')}</div></div>` : ''}`;
   const dlg = $('#modal');
@@ -338,7 +391,7 @@ function vcard(v) {
   const e = embed(v.url), m = v.map ? MAPS.find((x) => x.id === v.map) : null;
   const media = !e ? `<a class="vlink" href="${esc(v.url)}" target="_blank" rel="noopener">▶ Open video</a>`
     : e.kind === 'video' ? `<video src="${esc(e.src)}" controls preload="metadata"></video>`
-    : `<iframe src="${esc(e.src)}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    : `<iframe src="${esc(e.src)}" title="${esc(v.title || (m ? `KR${m.ed} #${m.id} video` : 'Video'))}" loading="lazy" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
   return `<div class="vcard"><div class="vmedia">${media}</div><div class="vmeta">
     <div><b>${esc(v.title || (m ? `KR${m.ed} #${m.id}` : 'Video'))}</b>${v.outdated ? ` <span class="tag r-meh" title="A faster TAS has been uploaded since this video">Older run${v.forTas ? ' · ' + v.forTas.toFixed(3) : ''}</span>` : ''}</div>
     <div class="muted">${m ? `<a href="#map-${m.id}" onclick="openMap(${m.id});return false" style="color:${ED_COL[m.ed]}">KR${m.ed} #${m.id}</a>` : 'Compilation'}${v.runner ? ' · ' + P(v.runner) : ''} · <a href="${esc(v.url)}" target="_blank" rel="noopener">source ↗</a></div></div></div>`;
@@ -380,7 +433,7 @@ function renderLatest() {
   const e = sel.clip ? embed(sel.clip.url) : null;
   const player = sel.clip
     ? (e ? (e.kind === 'video' ? `<video src="${esc(e.src)}" controls preload="metadata"></video>`
-        : `<iframe src="${esc(e.src)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`)
+        : `<iframe src="${esc(e.src)}" title="Clip: KR${sel.m.ed} #${sel.m.id} by ${esc(sel.r.by)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`)
       : `<a class="vlink" href="${esc(sel.clip.url)}" target="_blank" rel="noopener">▶ Watch clip</a>`)
     : `<div class="noclip"><div class="big">${fmt(sel.r.t)}</div><div class="muted">No clip for this run yet. Add one in the sheet's Videos tab.</div>
         <div class="links" style="justify-content:center;margin-top:10px"><button class="btn pri" onclick="openMap(${sel.m.id})">Open map · Inputs</button><a class="btn" href="${esc(sel.r.replay)}">⬇ Replay</a></div></div>`;
@@ -388,7 +441,7 @@ function renderLatest() {
     <div class="lt-head"><h3>Latest TASes</h3><span class="muted">${state.ed ? 'KR' + state.ed : 'All editions'}</span></div>
     <div class="lt">
       <div class="lt-list">${L.map((x) => { const d = g(x); return `
-        <button class="lt-item ${x.r.id === LATEST_SEL ? 'on' : ''}" style="--c:${ED_COL[x.m.ed]}" onclick="selectLatest(${x.r.id})">
+        <button class="lt-item ${x.r.id === LATEST_SEL ? 'on' : ''}" aria-pressed="${x.r.id === LATEST_SEL}" style="--c:${ED_COL[x.m.ed]}" onclick="selectLatest(${x.r.id})">
           <span class="lt-map"><b>KR${x.m.ed}</b> #${x.m.id}</span>
           <span class="lt-who">${esc(x.r.by)}${x.rank === 1 ? ' <span class="tag r-great">#1</span>' : ''}</span>
           <span class="lt-time mono">${fmt(x.r.t)}</span>
