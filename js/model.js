@@ -26,9 +26,6 @@ export function filterMaps(maps, { ed = 0, q = '', filter = 'all', sort = 'id' }
   const keep = {
     tas: (m) => m.best,
     none: (m) => !m.best,
-    beat: (m) => m.gap < 0,
-    behind: (m) => m.gap > 0,
-    unrated: (m) => m.best && !m.rating,
   }[filter] || (CUTS.includes(filter) ? (m) => m.cut === filter : null);
   if (keep) list = list.filter(keep);
   const order = {
