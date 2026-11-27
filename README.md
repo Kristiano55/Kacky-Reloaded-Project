@@ -12,7 +12,7 @@ A live TAS tracker for **Kacky Reloaded** (Trackmania 2020): all 525 maps from K
 scripts/update.mjs  ──► data/maps.json    525 maps (UID, author, author time, campaign)
                     ──► data/wr.json      WR time / holder / date per map UID
                     ──► data/tas.json     TAS runs per map UID
-.github/workflows/update.yml  runs every 30 min (each run starts the next; cron as backup), commits data, deploys Pages
+.github/workflows/update.yml  runs every 30 min (each run starts the next; cron as backup); commits and deploys only when records change
 index.html + app.js           static site; opening a map also refreshes its TAS runs live
 ```
 
@@ -20,17 +20,21 @@ index.html + app.js           static site; opening a map also refreshes its TAS 
 
 Upload the replay to **[tmtas.exchange/upload](https://tmtas.exchange/upload)**. The site picks it up on the next refresh, or straight away when someone opens that map.
 
-## Classifying TASes
+## Tracker sheet (Google Sheets)
 
-Each TAS is tagged with a **cut type** (No cut / Normal cut / Uber / Noseboost) and a **rating** (Great / Good / Okay / Meh).
-Tags live in `data/classify.json`, keyed by map UID:
+[Kacky Reloaded TAS Tracker](https://docs.google.com/spreadsheets/d/1sZ8D3ALu3Ex7AUxqpjJlUAXCA4NVRdZ8VCrsmqW4lvw/edit) (view-only link; editors are invited by the owner).
 
-```json
-{ "Fbj1K9BjAE0fN8fFBlLThd7sgQ1": { "cut": "Normal cut", "rating": "Great" } }
-```
+- **Maps tab:** WR / TAS columns import themselves from this site (`data/sheet_core.csv`, `data/sheet_extra.csv`, generated at deploy). People fill in **Cut**, **Rating**, **Video link** and **Video title**.
+- **Compilations tab:** videos not tied to one map.
+- **Main tab:** progress, per-edition time saved, cut counts, ratings and a runner leaderboard.
+- Every 30 min the data job reads those columns (`scripts/gsheet_sync.mjs`, CSV export, no credentials) into `data/classify.json` and `data/videos.json`.
+- A tag or video remembers which TAS it was added for. When a faster TAS replaces that run, it turns red in the sheet and the site stops showing it as current.
 
-They're edited in the tracker sheet's Maps tab, then synced into this file. The site's Stats tab and badges are built from them.
 Score = average of Great 100 · Good 75 · Okay 50 · Meh 25.
+
+## Share links
+
+`/m/<map #>.html` and `/p/<player>.html` carry link-preview tags (thumbnail, WR vs TAS) for Discord and others, then redirect to the site. Use **🔗 Copy link** on a map or profile.
 
 ## Player profiles
 
