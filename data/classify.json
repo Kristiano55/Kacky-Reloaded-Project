@@ -1,78 +1,116 @@
 {
  "Fbj1K9BjAE0fN8fFBlLThd7sgQ1": {
   "cut": "Noseboost",
-  "rating": "Good"
+  "rating": "Good",
+  "forTas": 8.055,
+  "outdated": false
  },
  "2bN4eKC9GSCHW_OVhEAkWgxeLOi": {
   "cut": "No cut",
-  "rating": "Okay"
+  "rating": "Okay",
+  "forTas": 13.352,
+  "outdated": false
  },
  "wjo973bQxbaqONwQorChNyVVc97": {
   "cut": "Noseboost",
-  "rating": ""
+  "rating": "",
+  "forTas": 7.817,
+  "outdated": false
  },
  "ZKcTrRYDrIsO6eKUm8k3tID7Vge": {
   "cut": "Noseboost",
-  "rating": ""
+  "rating": "",
+  "forTas": 8.922,
+  "outdated": false
  },
  "ZqZb_qSOsUwpzblIinD1jmHEuy6": {
   "cut": "No cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 13.508,
+  "outdated": false
  },
  "thbjIrTr62Cnd1YqR4nABVuR9ec": {
   "cut": "Noseboost",
-  "rating": "Good"
+  "rating": "Good",
+  "forTas": 5.211,
+  "outdated": false
  },
  "D_TtBFb8wZjxtYBQM3i5GYL40V5": {
   "cut": "No cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 13.361,
+  "outdated": false
  },
  "5yCwUXdLQF0WqYs3e9EAoldK268": {
   "cut": "Normal cut",
-  "rating": "Okay"
+  "rating": "Okay",
+  "forTas": 8.306,
+  "outdated": false
  },
  "ZmYzYzAwNjAtZTQxMi00NDg4LWF": {
   "cut": "Noseboost",
-  "rating": "Meh"
+  "rating": "Meh",
+  "forTas": 18.684,
+  "outdated": false
  },
  "OTYwYTUxNjctMTIwNS00NDJkLWE": {
   "cut": "Normal cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 31.874,
+  "outdated": false
  },
  "YzU1YTUwM2ItZjhmNC00NzE4LWI": {
   "cut": "No cut",
-  "rating": "Okay"
+  "rating": "Okay",
+  "forTas": 18.765,
+  "outdated": false
  },
  "v2dE1yrUYCLZyxALO88J34lteE0": {
   "cut": "Noseboost",
-  "rating": "Good"
+  "rating": "Good",
+  "forTas": 8.65,
+  "outdated": false
  },
  "MWNiYWVmM2EtMGQwMC00NTBkLWI": {
   "cut": "Normal cut",
-  "rating": "Okay"
+  "rating": "Okay",
+  "forTas": 8.379,
+  "outdated": false
  },
  "KlmBFvfj8WDy6qRDwGqSK7oYSmm": {
   "cut": "Uber",
-  "rating": "Good"
+  "rating": "Good",
+  "forTas": 9.417,
+  "outdated": false
  },
  "X53y_hiJOSlGcpkdKMlxwnQt1m7": {
   "cut": "Normal cut",
-  "rating": "Good"
+  "rating": "Good",
+  "forTas": 14.497,
+  "outdated": false
  },
  "sGWxN37rVL6rTbXIfBzdKOe4Anj": {
   "cut": "Noseboost",
-  "rating": "Great"
+  "rating": "Great",
+  "forTas": 10.536,
+  "outdated": false
  },
  "TFmHklLo3LB6yfXgX_PiQHL3rvf": {
   "cut": "Normal cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 14.313,
+  "outdated": false
  },
  "mTmUccUVGL4nVYX3WaVRqYofg_a": {
   "cut": "No cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 11.498,
+  "outdated": false
  },
  "tS545RHUZJmp_Cs2HG9jCK7mkOd": {
   "cut": "Normal cut",
-  "rating": ""
+  "rating": "",
+  "forTas": 18.604,
+  "outdated": false
  }
 }
